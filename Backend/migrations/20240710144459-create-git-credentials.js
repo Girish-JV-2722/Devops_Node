@@ -2,21 +2,30 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Users', {
-      id: {
+    await queryInterface.createTable('gitCredentials', {
+      gitId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      username: {
-        type: Sequelize.STRING
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Users',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
-      AWS_secretkey: {
-        type: Sequelize.STRING
+      gitUsername: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
-      AWS_secretkey: {
-        type: Sequelize.STRING
+      gitToken: {
+        type: Sequelize.STRING,
+        allowNull: false
       },
       createdAt: {
         allowNull: false,
@@ -29,6 +38,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Users');
+    await queryInterface.dropTable('gitCredentials');
   }
 };

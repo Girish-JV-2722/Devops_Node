@@ -14,9 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   User.init({
-    username: DataTypes.STRING,
-    AWS_secretkey: DataTypes.STRING,
-    AWS_secretkey: DataTypes.STRING
+    AWS_Accesskey: DataTypes.STRING,
+    AWS_Secretkey: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'User',

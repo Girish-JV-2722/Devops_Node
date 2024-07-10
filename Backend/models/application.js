@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
     scripts: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    nodeVersion: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'Applications',

@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dockerode": "^4.0.2",
+    "ejs": "~2.6.1",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1",
+    "mysql2": "^3.10.2",
+    "sequelize": "^6.37.3",
+    "sequelize-cli": "^6.6.2",
+    "shelljs": "^0.8.5",
+    "simple-git": "^3.25.0",
+    "tedious": "^18.2.3"
+  }
+}

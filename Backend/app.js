@@ -10,8 +10,14 @@ var usersRouter = require('./routes/users');
 const passport = require('passport')
 const cors = require('cors'); // Import the cors package
 const session = require('express-session');
+const { Sequelize, DataTypes } = require('sequelize');
 
 var app = express();
+
+const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
+  host: '192.168.43.173',
+  dialect: 'mysql'
+});
 
 // Enable CORS for specific origins
 app.use(cors({

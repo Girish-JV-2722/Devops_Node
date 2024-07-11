@@ -2,9 +2,20 @@ const passport = require('passport');
 const GitHubStrategy = require('passport-github2').Strategy;
 const express = require('express');
 const connection=require('../routes/database')
-
+const ensureAuthenticated = require('./authMiddleware');
 const router = express.Router();
+
 require('dotenv').config();
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
+  host: '192.168.43.173',
+  dialect: 'mysql'
+});
+
+const User = require('../models/user')(sequelize, DataTypes);
+const gitcredentials = require('../models/gitcredentials')(sequelize, DataTypes);
+
+
 
 passport.use(
   new GitHubStrategy(
@@ -14,27 +25,25 @@ passport.use(
       callbackURL: process.env.GITHUB_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, cb) => {
-    //   const user = await User.findOne({
-    //     accountId: profile.id,
-    //     provider: 'github',
-    //   });
-      // if (!user) {
-      //   console.log('Adding new github user to DB..');
-      //   const user = new User({
-      //     accountId: profile.id,
-      //     name: profile.username,
-      //     provider: profile.provider,
-      //   });
-      //   await user.save();
-      //   // console.log(user);
-      //   return cb(null, profile);
-      // } else {
-      //   console.log('Github user already exist in DB..');
-      //   // console.log(profile);
-      //   return cb(null, profile);
-      // }
-      console.log(`Got the access token : ${accessToken}`);
-      return cb(null, profile);
+      try {
+        let user = await User.findOne( { id: profile.id });
+  
+        if (!user) {
+          user = await User.create({
+            id: profile.id,
+          });
+        }
+  
+        await gitcredentials.create({
+          userId: profile.id,
+          gitUsername: profile.username,
+          gitToken: accessToken,
+        });
+        console.log(profile);
+        return cb(null, user);
+      } catch (error) {
+        return cb(error);
+      }
     }
   )
 );
@@ -50,13 +59,14 @@ router.get(
   }
 );
 
-router.get('/success', async (req, res) => {
+router.get('/success', ensureAuthenticated ,async (req, res) => {
   // const userInfo = {
   //   id: req.session.passport.user.id,
   //   displayName: req.session.passport.user.username,
   //   provider: req.session.passport.user.provider,
   // };
-  res.render('index', { title:"success" });
+
+  res.render('success', { title:"success" });
 });
 
 router.get('/error', (req, res) => res.send('Error logging in via Github..'));

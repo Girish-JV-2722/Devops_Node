@@ -2,7 +2,7 @@
   "development": {
     "username": "admin",
     "password": "admin123",
-    "database": "autodevops",
+    "database": "autodevops4",
     "host": "192.168.43.173", 
     "dialect": "mysql"
   },

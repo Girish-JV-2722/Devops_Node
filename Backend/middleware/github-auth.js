@@ -7,7 +7,7 @@ const router = express.Router();
 
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
+const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
   host: '192.168.43.173',
   dialect: 'mysql'
 });
@@ -26,19 +26,25 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, cb) => {
       try {
-        let user = await User.findOne( { id: profile.id });
+        let user = await User.findOne({ where: { id: profile.id } });
   
         if (!user) {
           user = await User.create({
             id: profile.id,
           });
+
+          await gitcredentials.create({
+            userId: profile.id,
+            gitUsername: profile.username,
+            gitToken: accessToken,
+          });
+        }else{
+          let GitCredentials= await gitcredentials .findOne({ where: { userId: user.id} });
+          await GitCredentials.update({ gitToken: accessToken });
         }
   
-        await gitcredentials.create({
-          userId: profile.id,
-          gitUsername: profile.username,
-          gitToken: accessToken,
-        });
+        
+
         console.log(profile);
         return cb(null, user);
       } catch (error) {

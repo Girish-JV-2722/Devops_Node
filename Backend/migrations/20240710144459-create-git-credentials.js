@@ -3,11 +3,10 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('gitCredentials', {
-      gitId: {
-        allowNull: false,
-        autoIncrement: true,
+      gitUsername: {
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.STRING,
+        allowNull: false
       },
       userId: {
         type: Sequelize.INTEGER,
@@ -18,10 +17,6 @@ module.exports = {
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
-      },
-      gitUsername: {
-        type: Sequelize.STRING,
-        allowNull: false
       },
       gitToken: {
         type: Sequelize.STRING,

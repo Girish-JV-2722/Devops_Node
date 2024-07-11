@@ -3,7 +3,7 @@
     "username": "admin",
     "password": "admin123",
     "database": "autodevops",
-    "host": " 10.2.122.121", 
+    "host": "10.2.122.121", 
     "dialect": "mysql"
   },
   "test": {

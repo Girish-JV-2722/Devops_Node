@@ -43,6 +43,7 @@ const SelectInput = ({ name, value, onChange, options, placeholder }) => (
 export default function FormPage() {
   const [formData, setFormData] = useState({});
 
+  
   const handleOnChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({

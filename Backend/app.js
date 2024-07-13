@@ -21,7 +21,8 @@ const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
 
 // Enable CORS for specific origins
 app.use(cors({
-  origin: '*'
+  origin: 'http://localhost:5173',
+  credentials: true,
 }));
 
 // view engine setup

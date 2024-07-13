@@ -8,7 +8,7 @@ const router = express.Router();
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
-  host: '10.2.122.121',
+  host: '192.168.43.173',
   dialect: 'mysql'
 });
 
@@ -60,7 +60,8 @@ router.get(
   '/callback',
   passport.authenticate('github', { failureRedirect: '/auth/github/error' }),
   function (req, res) {
-    // Successful authentication, redirect to success screen.
+    // res.json({gitAuth:"Hello"});
+    req.session.user = req.user; 
     res.redirect('/auth/github/success');
   }
 );
@@ -71,11 +72,19 @@ router.get('/success', ensureAuthenticated ,async (req, res) => {
   //   displayName: req.session.passport.user.username,
   //   provider: req.session.passport.user.provider,
   // };
-
-  res.render('success', { title:"success" });
+   res.redirect('http://localhost:5173/form');
 });
 
 router.get('/error', (req, res) => res.send('Error logging in via Github..'));
+
+router.get('/status', (req, res) => {
+  if (req.session.user) {
+    res.json({ authenticated: true });
+  } else {
+    res.json({ authenticated: false });
+  }
+});
+
 
 router.get('/signout', (req, res) => {
   try {

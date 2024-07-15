@@ -15,7 +15,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 var app = express();
 
 const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
-  host: '192.168.43.173',
+  host: '10.2.120.224',
   dialect: 'mysql'
 });
 

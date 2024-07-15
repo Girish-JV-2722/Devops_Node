@@ -8,7 +8,7 @@ const router = express.Router();
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
-  host: '192.168.43.173',
+  host: '10.2.120.224',
   dialect: 'mysql'
 });
 

@@ -8,7 +8,7 @@ const router = express.Router();
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
-  host: '10.2.122.121',
+  host: process.env.DB_HOST,
   dialect: 'mysql'
 });
 
@@ -71,8 +71,9 @@ router.get('/success', ensureAuthenticated ,async (req, res) => {
   //   displayName: req.session.passport.user.username,
   //   provider: req.session.passport.user.provider,
   // };
-
-  res.render('success', { title:"success" });
+  let user = await User.findOne({ where: { id: profile.id } });
+  let GitCredentials= await gitcredentials.findOne({ where: { userId: user.id} });
+  res.redirect('http://localhost:5173/form', { token: GitCredentials.gitToken});
 });
 
 router.get('/error', (req, res) => res.send('Error logging in via Github..'));

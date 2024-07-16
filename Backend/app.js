@@ -7,6 +7,7 @@ var logger = require('morgan');
 const githubRouter = require('./middleware/github-auth');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var projectRouter=require('./routes/project');
 const passport = require('passport')
 const cors = require('cors'); // Import the cors package
 const session = require('express-session');
@@ -15,7 +16,7 @@ const { Sequelize, DataTypes } = require('sequelize');
 var app = express();
 
 const sequelize = new Sequelize('autodevops', 'admin', 'admin123', {
-  host: '192.168.43.173',
+  host: process.env.DB_HOST,
   dialect: 'mysql'
 });
 
@@ -55,6 +56,7 @@ passport.deserializeUser(function (obj, cb) {
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth/github', githubRouter);
+app.use('/project',projectRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

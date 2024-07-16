@@ -73,7 +73,7 @@ router.get('/success', ensureAuthenticated ,async (req, res) => {
   // };
   let user = await User.findOne({ where: { id: profile.id } });
   let GitCredentials= await gitcredentials.findOne({ where: { userId: user.id} });
-  res.redirect('http://localhost:5173/form', { token: GitCredentials.gitToken});
+  res.redirect('http://localhost:5173/configure', { token: GitCredentials.gitToken});
 });
 
 router.get('/error', (req, res) => res.send('Error logging in via Github..'));

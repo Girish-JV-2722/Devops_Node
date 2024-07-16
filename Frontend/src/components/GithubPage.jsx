@@ -1,31 +1,51 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import githubImage from '../assets/github.jpg';
 
-export default function GithubPage() {
+function GithubPage() {
   const [accessTokenStatus, setAccessTokenStatus] = useState('idle'); // 'idle', 'success', 'failure'
   const navigate = useNavigate();
+  const projectId = useParams().projectId; 
+
+  useEffect(() => {
+    // Check if the user is already authenticated
+    const checkAuth = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/auth/github/status', { withCredentials: true });
+        if (response.data.authenticated) {
+        // /if(true){
+          navigate(`${projectId}/form`,{ replace: true });
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+    checkAuth();
+    
+  }, [navigate]);
 
   // Mock variable to decide success or failure
-  const mockSuccess = true;
+  // const mockSuccess = true;
 
   const handleGetAccessToken = async () => {
     try {
       // Simulating an API call to get GitHub access token
-      // const response = await axios.get('/api/github/access-token');
-      // const { data } = response;
+      // const response = await axios.get('http://localhost:3000/auth/github');
+      // // const { data } = response;
+      // console.log(response);
+      window.location.href = 'http://localhost:3000/auth/github';
 
-      if (mockSuccess) {
-        setAccessTokenStatus('success');
-        toast("Successfully obtained GitHub access token");
-        setTimeout(() => navigate('/form'), 2000); // Redirect to form page after 2 seconds
-      } else {
-        setAccessTokenStatus('failure');
-        toast("Failed to obtain GitHub access token");
-      }
+      // if (mockSuccess) {
+      //   setAccessTokenStatus('success');
+      //   toast("Successfully obtained GitHub access token");
+      //   setTimeout(() => navigate('/form'), 2000); // Redirect to form page after 2 seconds
+      // } else {
+      //   setAccessTokenStatus('failure');
+      //   toast("Failed to obtain GitHub access token");
+      // }
     } catch (error) {
       setAccessTokenStatus('failure');
       toast("Failed to obtain GitHub access token");
@@ -85,3 +105,4 @@ export default function GithubPage() {
     </div>
   );
 }
+export default GithubPage;

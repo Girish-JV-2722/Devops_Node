@@ -20,7 +20,7 @@ const TextInput = ({ name, value, onChange, placeholder, type = "text" }) => (
     value={value || ''}
     onChange={onChange}
     placeholder={placeholder}
-    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
   />
 );
 
@@ -43,6 +43,7 @@ const SelectInput = ({ name, value, onChange, options, placeholder }) => (
 export default function FormPage() {
   const [formData, setFormData] = useState({});
 
+  
   const handleOnChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
@@ -74,9 +75,9 @@ export default function FormPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-200">
-      <div className="bg-white p-8 my-8 rounded-lg shadow-lg w-full max-w-xl">
+      <div className="bg-white p-8 my-8 rounded-lg shadow-lg w-full max-w-lg">
         <h1 className="text-2xl font-bold mb-4 text-center text-gray-900">Deploy App on AWS</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <TextInput
             name="awsAccessKey"
             value={formData?.awsAccessKey}

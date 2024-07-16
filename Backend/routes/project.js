@@ -13,6 +13,7 @@ const Project = require("../models/project")(sequelize, DataTypes);
 /* GET users listing. */
 router.post("/createApp", async function (req, res, next) {
   try {
+
     const { projectName, clientName, managerName, description } = req.body;
 
     const project = await Project.create({
@@ -32,7 +33,7 @@ router.post("/createApp", async function (req, res, next) {
 });
 
 
-router.post("/create", async function (req, res, next) {
+router.post("/createApp", async function (req, res, next) {
     try {
       const { projectName, clientName, managerName, description } = req.body;
   

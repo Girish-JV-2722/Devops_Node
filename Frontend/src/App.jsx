@@ -15,6 +15,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/add-project" element={<ProjectDetailsPage />} />
         <Route path="/configure/:projectId" element={<FormPage />} />
+        <Route path="/configure/success" element={<successPage />} />
       </Routes>
     </Router>
     </Provider>

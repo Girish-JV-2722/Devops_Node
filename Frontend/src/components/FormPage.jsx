@@ -40,8 +40,11 @@ const SelectInput = ({ name, value, onChange, options, placeholder }) => (
   </select>
 );
 
+
+
 export default function FormPage() {
   const [formData, setFormData] = useState({});
+  const [isFetchingToken, setIsFetchingToken] = useState(false);
 
   
   const handleOnChange = (e) => {
@@ -50,9 +53,27 @@ export default function FormPage() {
       ...prevFormData,
       [name]: value
     }));
-    console.log('Form Data:', formData);
+    // console.log('Form Data:', formData);
   };
-
+  const handleGetGitHubToken = async () => {
+    setIsFetchingToken(true);
+    try {
+      const response = await axios.get('http://10.2.120.224:3000/', { withCredentials: true });
+      if (response.data.accessToken) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          githubAccessToken: response.data.accessToken
+        }));
+        console.log(response);
+        toast("Successfully obtained GitHub access token");
+      } else {
+        toast("Failed to obtain GitHub access token");
+      }
+    } catch (error) {
+      toast("Failed to obtain GitHub access token");
+    }
+    setIsFetchingToken(false);
+  };
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -62,10 +83,14 @@ export default function FormPage() {
       toast("Form data is incomplete");
       return;
     }
-
+    
     try {
-      // const response = await axios.post('/deploy', formData);
-      // console.log(response.data);
+      const response = await axios.post('http://10.2.120.224:3000/project/create', formData);
+      if (response.data) {
+        toast("Successfully sent data to server");
+      } else {
+        toast("Failed to send data to server");
+      }
       toast("Successfully deployed application");
     } catch (error) {
       toast("Oops! Something went wrong");
@@ -97,6 +122,23 @@ export default function FormPage() {
             options={awsRegions}
             placeholder="Select AWS Region"
           />
+          <div className="flex items-center space-x-4">
+            <TextInput
+              name="githubAccessToken"
+              value={formData?.githubAccessToken}
+              onChange={handleOnChange}
+              placeholder="GitHub Access Key"
+              type="password"
+            />
+            <button
+              type="button"
+              onClick={handleGetGitHubToken}
+              className={`bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 transition duration-300 ${isFetchingToken ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isFetchingToken}
+            >
+              Get Git Token
+            </button>
+          </div>  
           <TextInput
             name="appName"
             value={formData?.appName}

@@ -29,6 +29,7 @@ router.post("/create", async function (req, res, next) {
     });
     // let projectData= await Project.findOne({ where: { gitToken: token} });
     res.status(201).json(project);
+    console.log(project);
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Failed to create project" });

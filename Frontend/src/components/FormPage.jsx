@@ -37,6 +37,7 @@ export default function FormPage() {
   const [formData, setFormData] = useState({});
   const [isFetchingToken, setIsFetchingToken] = useState(false);
   const [rerender, setRerender] = useState(false);
+  const [token,setToken]=useState(localStorage.getItem("accessToken"));
 
   useEffect(() => {
     // async function fetchData() {
@@ -65,40 +66,38 @@ export default function FormPage() {
 
     if (codeParams && localStorage.getItem("accessToken") === null) {
       async function getAccessToken() {
-        await fetch("http://localhost:3000/getAccessToken?code=" + codeParams, {
+        const response = await fetch("http://localhost:3000/getAccessToken?code=" + codeParams, {
           method: "GET",
         })
-          .then((response) => {
-            return response.json();
-          })
-          .then((data) => {
-            console.log(data);
-            if (data.access_token) {
-              localStorage.setItem("accessToken", data.access_token);
-              setRerender(!rerender);
-            }
-          });
+        const data = await response.json();
+        console.log(data)
+        if (data.access_token) {
+          localStorage.setItem("accessToken", data.access_token);
+
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            gitToken:token,
+          }));
+          console.log("successfully obtained token");
+          toast.success("Successfully obtained GitHub access token");
+          setRerender(!rerender);
+        } else {
+          
+          toast.error("Failed to obtain GitHub access token");
+          console.log("failed obtained token");
+        }
       }
       getAccessToken();
     }
+    else{
+      console.log("Token already exists");
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        gitToken:token,
+      }));
+    }
     // getUserData();
   }, []);
-
-  async function getUserData() {
-    console.log(localStorage.getItem("accessToken")+"mandar");
-    await fetch("http://localhost:3000/getUserData", {
-      method: "GET",
-      headers: {
-        "Authorization": "Bearer " + localStorage.getItem("accessToken"),
-      }
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-      });
-  }
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -106,7 +105,9 @@ export default function FormPage() {
       ...prevFormData,
       [name]: value,
     }));
+    
   };
+  
   const CLIENT_ID = "Ov23liBPsEnGO0AWvNx5";
 
   const handleGetGitHubToken = async () => {
@@ -115,6 +116,7 @@ export default function FormPage() {
     );
     // window.location.href="http://localhost:3000/auth/github/";
   };
+  
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -127,16 +129,35 @@ export default function FormPage() {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/project/create",
-        formData
-      );
-      if (response.data) {
-        toast("Successfully sent data to server");
-      } else {
-        toast("Failed to send data to server");
-      }
-      toast("Successfully deployed application");
+      await fetch( "http://localhost:3000/configureApplication", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("accessToken"),
+          'Content-Type': 'application/json',
+        }, 
+       body: JSON.stringify(formData),
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          toast("Successfully sent data to server");
+          console.log(data);
+        });
+    //   const response = await axios.post(
+    //     "http://localhost:3000/configureApplication",
+    //     {headers: {
+    //       "Authorization": "Bearer " + localStorage.getItem("accessToken"),
+    //     }
+    //   },
+    //     formData
+    //   );
+    //   if (response.data) {
+    //     toast("Successfully sent data to server");
+    //   } else {
+    //     toast("Failed to send data to server");
+    //   }
+    //   toast("Successfully deployed application");
     } catch (error) {
       toast("Oops! Something went wrong");
     }
@@ -149,30 +170,14 @@ export default function FormPage() {
           Deploy App on AWS
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <TextInput
-            name="awsAccessKey"
-            value={formData?.awsAccessKey}
-            onChange={handleOnChange}
-            placeholder="AWS Access Key"
-          />
-          <TextInput
-            name="awsSecretKey"
-            value={formData?.awsSecretKey}
-            onChange={handleOnChange}
-            placeholder="AWS Secret Key"
-          />
-          <SelectInput
-            name="region"
-            value={formData?.region}
-            onChange={handleOnChange}
-            options={awsRegions}
-            placeholder="Select AWS Region"
-          />
-          <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4">
             <TextInput
-              name="githubAccessToken"
-              value={formData?.githubAccessToken}
-              onChange={handleOnChange}
+              name="gitToken"
+              value={token}
+              onChange={(e)=>{handleOnChange(e);
+              setToken(localStorage.getItem("accessToken"));
+              }
+              }
               placeholder="GitHub Access Key"
               type="password"
             />
@@ -188,27 +193,47 @@ export default function FormPage() {
             </button>
           </div>
           <TextInput
+            name="AWS_Accesskey"
+            value={formData?.AWS_Accesskey}
+            onChange={handleOnChange}
+            placeholder="AWS Access Key"
+          />
+          <TextInput
+            name="AWS_Secretkey"
+            value={formData?.AWS_Secretkey}
+            onChange={handleOnChange}
+            placeholder="AWS Secret Key"
+          />
+          <SelectInput
+            name="region"
+            value={formData?.region}
+            onChange={handleOnChange}
+            options={awsRegions}
+            placeholder="Select AWS Region"
+          />
+          
+          {/* <TextInput
             name="appName"
             value={formData?.appName}
             onChange={handleOnChange}
             placeholder="Application Name"
-          />
+          /> */}
           <SelectInput
-            name="env"
-            value={formData?.env}
+            name="environment"
+            value={formData?.environment}
             onChange={handleOnChange}
             options={["EC2", "Elastic Beanstalk"]}
             placeholder="Select Deployment Environment"
           />
           <TextInput
-            name="dockerHubID"
-            value={formData?.dockerHubID}
+            name="dockerUsername"
+            value={formData?.dockerUsername}
             onChange={handleOnChange}
-            placeholder="Docker Hub ID"
+            placeholder="Docker Hub Username"
           />
           <TextInput
-            name="dockerHubPassword"
-            value={formData?.dockerHubPassword}
+            name="dockerPassword"
+            value={formData?.dockerPassword}
             onChange={handleOnChange}
             placeholder="Docker Hub Password"
             type="password"
@@ -248,16 +273,6 @@ export default function FormPage() {
             onChange={handleOnChange}
             placeholder="App Run Command"
           />
-          <button
-            type="button"
-            onClick={getUserData}
-            className={`bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 transition duration-300 ${
-              isFetchingToken ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            disabled={isFetchingToken}
-          >
-            nsnd
-          </button>
           <TextInput
             name="buildCommand"
             value={formData?.buildCommand}
@@ -265,8 +280,8 @@ export default function FormPage() {
             placeholder="App Build Command"
           />
           <TextInput
-            name="githubRepo"
-            value={formData?.githubRepo}
+            name="gitUrl"
+            value={formData?.gitUrl}
             onChange={handleOnChange}
             placeholder="GitHub Repository"
           />

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { addProject } from '../actions/projectActions'; // Define action creator
+import axios from 'axios';
 
 const TextInput = ({ name, value, onChange, placeholder, type = 'text' }) => (
   <input
@@ -24,17 +25,25 @@ function ProjectDetailsPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
+  const handleSubmit =async (e) => {
     e.preventDefault();
     const newProject = {
-      id: Date.now().toString(),
-      name: projectName,
-      description,
+      projectName,
       clientName,
-      manager,
+      managerName: manager,
+      description,
     };
-    dispatch(addProject(newProject)); // Dispatch action to add project
-    navigate('/');
+    // axios.post('http://localhost:3000/project/create', newProject); // Add project to database
+    // dispatch(addProject(newProject)); // Dispatch action to add project
+    // navigate('/');
+    try {
+      const response = await axios.post('http://localhost:3000/project/create', newProject);
+      dispatch(addProject(response.data));
+      navigate('/');
+    } catch (error) {
+      console.error("Error adding project:", error);
+      alert("Failed to add project. Please try again.");
+    }
   };
 
   const handleOnChange = (e) => {

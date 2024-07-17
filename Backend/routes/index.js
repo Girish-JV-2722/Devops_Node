@@ -48,24 +48,28 @@ router.get("/getAccessToken", async function (req, res, next) {
     });
 });
 
-router.get("/getUserData", async function (req, res) {
+router.post("/configureApplication", async function (req, res) {
   req.get("Authorization"); // Bearer accesstoken
- 
-
+  
+  console.log("REQUEST:");
+   console.log(req);
   await fetch("https://api.github.com/user", {
     method: "GET",
     headers: {
-      "Authorization": req.get("Authorization")
+      "Authorization": req.get("Authorization"),
+      
     },
   })
     .then((response) => {
-      console.log(response);
+      // console.log(response);
       return response.json();
     })
     .then((data) => {
-      console.log(data);
+      
+      // console.log(data);
       res.json(data);
     });
+
 });
 
 module.exports = router;

@@ -85,7 +85,7 @@ export default function FormPage() {
   }, []);
 
   async function getUserData() {
-    console.log(localStorage.getItem("accessToken"));
+    console.log(localStorage.getItem("accessToken")+"mandar");
     await fetch("http://localhost:3000/getUserData", {
       method: "GET",
       headers: {

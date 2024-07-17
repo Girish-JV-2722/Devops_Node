@@ -3,8 +3,7 @@ var router = express.Router();
 // Import the mysql2 package
 // Import the mysql2 package and dotenv
 const mysql = require("mysql2");
-const fetch = (...args) =>
-  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const fetch = (...args) =>import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 // Create a connection to the database using environment variables
 const connection = mysql.createConnection({
@@ -56,10 +55,11 @@ router.get("/getUserData", async function (req, res) {
   await fetch("https://api.github.com/user", {
     method: "GET",
     headers: {
-      "Authorization": req.get("Authorization"),
+      "Authorization": req.get("Authorization")
     },
   })
     .then((response) => {
+      console.log(response);
       return response.json();
     })
     .then((data) => {

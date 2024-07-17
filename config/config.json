@@ -1,0 +1,10 @@
+{
+  "development": {
+    "username": "admin",
+    "password": "admin",
+    "database": "Db_node",
+    "host": "VEDAGIRISH\\SQLEXPRESS", 
+    "dialect": "mssql"
+  }
+}
+

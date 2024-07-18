@@ -154,7 +154,7 @@ router.post("/configureApplication", async function (req, res) {
           gitUrl,
           // scripts,
           nodeVersion,
-          projectId:"3",
+          projectId,
           userId:data.id,
         });
     

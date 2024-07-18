@@ -12,8 +12,8 @@ function HomePage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // const response = await axios.get('http://localhost:3000/project/create'); 
-        // setProjects(response.data);
+        const response = await axios.get('http://localhost:3000/project/getAllProjects'); 
+        setProjects(response.data);
         // setProjects([
         //   { projectId: "11", projectName: "Project K" },
         //   { projectId: "222", projectName: "Project 2" },

@@ -8,7 +8,7 @@ sudo yum install -y docker
 sudo service docker start
 
 # Pull the Docker image from Docker Hub
-dockerUsername="girish2722" # Replace with your Docker Hub username
+dockerUsername="mandaru" # Replace with your Docker Hub username
 dockerImage="firstimage"
 
 docker pull ${dockerUsername}/${dockerImage}

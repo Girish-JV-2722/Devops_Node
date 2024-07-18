@@ -1,7 +1,9 @@
 var express = require("express");
 var router = express.Router();
+const AWS = require('aws-sdk');
 // Import the mysql2 package
 // Import the mysql2 package and dotenv
+const { main } = require('../Deploy');
 const mysql = require("mysql2");
 const fetch = (...args) =>import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
@@ -113,7 +115,7 @@ router.post("/configureApplication", async function (req, res) {
       //application table
 
          //dockerhub table
-      try {
+      
     
         const {
           dockerUsername,
@@ -121,7 +123,7 @@ router.post("/configureApplication", async function (req, res) {
          
         } = req.body;
        
-    
+        
         // let GitCredentials= await gitcredentials.findOne({ where: { gitToken: token} });
 
         const dockerHubCredentials = await DockerhubCredentials.create({
@@ -131,10 +133,7 @@ router.post("/configureApplication", async function (req, res) {
         });
     
        
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    
+     
         const {
     
           region,
@@ -163,7 +162,14 @@ router.post("/configureApplication", async function (req, res) {
     
         await newApplication.save();
     
-       
+        // const AWS_Accesskey=user.AWS_Accesskey;
+        // const AWS_Secretkey=user.AWS_Secretkey;
+        // const gitUrl=application.gitUrl;
+        // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
+        // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
+        
+        await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
+         
     
         //deployemnts
         try {

@@ -13,6 +13,17 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME,
 });
 
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
+  host: process.env.DB_HOST,
+  dialect: 'mysql'
+});
+
+const User = require('../models/user')(sequelize, DataTypes);
+const GitCredentials = require('../models/gitcredentials')(sequelize, DataTypes);
+const DockerhubCredentials = require('../models/dockercredentials')(sequelize, DataTypes);
+
+const Application= require('../models/application')(sequelize, DataTypes);
 // Connect to the database
 connection.connect((err) => {
   if (err) {
@@ -45,14 +56,15 @@ router.get("/getAccessToken", async function (req, res, next) {
     .then((data) => {
       console.log(data);
       res.json(data);
+      
     });
 });
 
 router.post("/configureApplication", async function (req, res) {
   req.get("Authorization"); // Bearer accesstoken
   
-  console.log("REQUEST:");
-   console.log(req);
+  // console.log("REQUEST:");
+  //  console.log(req);
   await fetch("https://api.github.com/user", {
     method: "GET",
     headers: {
@@ -64,10 +76,99 @@ router.post("/configureApplication", async function (req, res) {
       // console.log(response);
       return response.json();
     })
-    .then((data) => {
+    .then(async (data) => {
+     
+  
+       console.log(req.body);
+    
+        const {  AWS_Accesskey,AWS_Secretkey,gitToken}=req.body;
+        let user = await User.findOne({ where: { id:data.id } });
+        console.log(user);
+        if (!user) {
+         let user = await User.create({
+            id: data.id,
+            AWS_Accesskey,
+            AWS_Secretkey,
+          });
+        }
+          console.log(gitToken);
+          let gitCredentials= await GitCredentials.findOne({ where: {userId:data.id} });
+        if(!gitCredentials){
+          await gitCredentials.create({
+            userId:data.id,
+            gitUsername: data.login,
+            gitToken: gitToken,
+          });
       
-      // console.log(data);
-      res.json(data);
+        }
+        // } else {
+        //   let GitCredentials = await gitcredentials.findOne({
+        //     where: { userId: data.id },
+        //   });
+        //   await GitCredentials.update({ gitToken: accessToken });
+        // }
+
+      
+      //application table
+
+ 
+    
+        const {
+    
+          region,
+          environment,
+          gitUrl,
+          nodeVersion,
+        } = req.body;
+        const {projectId} = req.query;
+        console.log("projectId: "+projectId);
+        if (!projectId) {
+          return res.status(400).json({ error: "Project ID is missing" });
+        }
+        
+        const newApplication = await Application.create({
+          region,
+          environment,
+          gitUrl,
+          // scripts,
+          nodeVersion,
+          projectId,
+          userId:data.id,
+        });
+    
+        newApplication.userId = data.id;
+        newApplication.projectId=projectId;
+    
+        await newApplication.save();
+    
+       
+    
+        
+      
+      // //dockerhub table
+      // try {
+    
+      //   const {
+      //     dockerUsername,
+      //     dockerPassword,
+         
+      //   } = req.body;
+       
+    
+      //   let GitCredentials= await gitcredentials.findOne({ where: { gitToken: token} });
+
+      //   const dockerHubCredentials = await DockerhubCredentials.create({
+      //     userId:data.id,
+      //     dockerUsername,
+      //     dockerPassword,
+      //   });
+    
+       
+      // } catch (error) {
+      //   res.status(500).json({ error: error.message });
+      // }
+
+      // res.json(data);
     });
 
 });

@@ -27,7 +27,7 @@ passport.use(
     async (accessToken, refreshToken, profile, cb) => {
       try {
         let user = await User.findOne({ where: { id: profile.id } });
-  
+        console.log(user);
         if (!user) {
           user = await User.create({
             id: profile.id,

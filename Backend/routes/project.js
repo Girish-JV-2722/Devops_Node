@@ -72,4 +72,14 @@ router.post("/createApp", async function (req, res, next) {
   }
   });
 
+
+  router.post("/getAllProject", async function (req, res, next) {
+    try {
+     
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+    });
+
+    
 module.exports = router;

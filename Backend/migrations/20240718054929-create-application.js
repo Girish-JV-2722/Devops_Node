@@ -4,17 +4,17 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('Applications', {
       applicationId: {
+        type: Sequelize.INTEGER,
         allowNull: false,
         autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
+        primaryKey: true
       },
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Users',
-          key: 'id'
+          model: 'Users', // name of the target model
+          key: 'id'       // key in the target model that we're referencing
         },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
@@ -34,6 +34,20 @@ module.exports = {
       scripts: {
         type: Sequelize.TEXT,
         allowNull: true
+      },
+      nodeVersion: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      projectId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Projects', // name of the target model
+          key: 'projectId'   // key in the target model that we're referencing
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

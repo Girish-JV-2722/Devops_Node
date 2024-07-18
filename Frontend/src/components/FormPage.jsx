@@ -3,6 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { awsRegions } from "../constants/regions";
+import { useNavigate, useParams } from "react-router-dom";
 
 const TextInput = ({ name, value, onChange, placeholder, type = "text" }) => (
   <input
@@ -38,8 +39,10 @@ export default function FormPage() {
   const [isFetchingToken, setIsFetchingToken] = useState(false);
   const [rerender, setRerender] = useState(false);
   const [token,setToken]=useState(localStorage.getItem("accessToken"));
+  const  { projectId } = useParams();
 
   useEffect(() => {
+    console.log(projectId);
     // async function fetchData() {
     //   try {
     //     const response = await axios.get('http://localhost:3000/auth/github/gettoken',{withCredentials:true});
@@ -129,7 +132,7 @@ export default function FormPage() {
     }
 
     try {
-      await fetch( "http://localhost:3000/configureApplication", {
+      await fetch( `http://localhost:3000/configureApplication?projectId=${projectId}`, {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("accessToken"),

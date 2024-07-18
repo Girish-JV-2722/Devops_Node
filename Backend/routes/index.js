@@ -22,6 +22,7 @@ const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
 const User = require('../models/user')(sequelize, DataTypes);
 const GitCredentials = require('../models/gitcredentials')(sequelize, DataTypes);
 const DockerhubCredentials = require('../models/dockercredentials')(sequelize, DataTypes);
+const Deployment = require('../models/deployments')(sequelize, DataTypes);
 
 const Application= require('../models/application')(sequelize, DataTypes);
 // Connect to the database
@@ -111,7 +112,28 @@ router.post("/configureApplication", async function (req, res) {
       
       //application table
 
- 
+         //dockerhub table
+      try {
+    
+        const {
+          dockerUsername,
+          dockerPassword,
+         
+        } = req.body;
+       
+    
+        // let GitCredentials= await gitcredentials.findOne({ where: { gitToken: token} });
+
+        const dockerHubCredentials = await DockerhubCredentials.create({
+          userId:data.id,
+          dockerUsername,
+          dockerPassword,
+        });
+    
+       
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     
         const {
     
@@ -132,41 +154,40 @@ router.post("/configureApplication", async function (req, res) {
           gitUrl,
           // scripts,
           nodeVersion,
-          projectId,
+          projectId:"3",
           userId:data.id,
         });
     
-        newApplication.userId = data.id;
-        newApplication.projectId=projectId;
+        
+        
     
         await newApplication.save();
     
        
     
-        
+        //deployemnts
+        try {
+          const {environment } = req.body;
       
-      // //dockerhub table
-      // try {
-    
-      //   const {
-      //     dockerUsername,
-      //     dockerPassword,
-         
-      //   } = req.body;
-       
-    
-      //   let GitCredentials= await gitcredentials.findOne({ where: { gitToken: token} });
-
-      //   const dockerHubCredentials = await DockerhubCredentials.create({
-      //     userId:data.id,
-      //     dockerUsername,
-      //     dockerPassword,
-      //   });
-    
-       
-      // } catch (error) {
-      //   res.status(500).json({ error: error.message });
-      // }
+          // Validate the input as necessary
+      
+          const newDeployment = await Deployment.create({
+            userId:user.id,
+            applicationId:newApplication.applicationId,
+            status:true,
+            log:"Something",
+            environment,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+      
+          res.status(201).json(newDeployment);
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'An error occurred while creating the deployment.' });
+        }
+      
+      
 
       // res.json(data);
     });

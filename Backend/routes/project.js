@@ -73,9 +73,11 @@ router.post("/createApp", async function (req, res, next) {
   });
 
 
-  router.post("/getAllProject", async function (req, res, next) {
+  router.get("/getAllProjects", async function (req, res, next) {
     try {
-     
+      let projects= await Project.findAll();
+      res.status(201).json(projects);
+
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

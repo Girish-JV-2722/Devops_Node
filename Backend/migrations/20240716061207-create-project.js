@@ -2,36 +2,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Applications', {
-      applicationId: {
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true,
-        type: Sequelize.INTEGER
-      },
-      userId: {
+    await queryInterface.createTable('Projects', {
+      projectId: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: 'Users',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        autoIncrement: true,
+        primaryKey: true
       },
-      region: {
+      projectName: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: false
       },
-      environment: {
+      clientName: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: false
       },
-      gitUrl: {
+      managerName: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: false
       },
-      scripts: {
+      description: {
         type: Sequelize.TEXT,
         allowNull: true
       },
@@ -46,6 +36,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Applications');
+    await queryInterface.dropTable('Projects');
   }
 };

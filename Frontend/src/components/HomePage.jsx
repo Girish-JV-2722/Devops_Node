@@ -1,34 +1,54 @@
-// HomePage.js
-
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTable } from 'react-table';
+import axios from 'axios';
 
 function HomePage() {
   const navigate = useNavigate();
-  const projects = useSelector((state) => state.projects.projects);
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        // const response = await axios.get('http://localhost:3000/project/create'); 
+        // setProjects(response.data);
+        // setProjects([
+        //   { projectId: "11", projectName: "Project K" },
+        //   { projectId: "222", projectName: "Project 2" },
+        //   { projectId: "3", projectName: "Project 3" },
+        // ]);
+        
+        setLoading(false);
+        console.log(projects);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   const handleAddProject = () => {
     navigate('/add-project');
   };
 
   const handleConfigure = (projectId) => {
+    // console.log(projectId)
     navigate(`/configure/${projectId}`);
   };
-
-  const data = React.useMemo(() => projects, [projects]);
 
   const columns = React.useMemo(
     () => [
       {
         Header: 'Project Name',
-        accessor: 'name',
+        accessor: 'projectName',
         className: 'text-gray-900 font-medium',
       },
       {
         Header: 'Actions',
-        accessor: 'id',
+        accessor: 'projectId',
         Cell: ({ value }) => (
           <button
             onClick={() => handleConfigure(value)}
@@ -45,8 +65,16 @@ function HomePage() {
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
     columns,
-    data,
+    data: projects, // No need to memoize `data`
   });
+
+  if (loading) {
+    return <div className="min-h-screen flex justify-center items-center bg-gray-200">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex justify-center items-center bg-gray-200">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-200">
@@ -61,7 +89,7 @@ function HomePage() {
           </button>
         </div>
         {projects.length === 0 ? (
-          <p className="text-center text-gray-600">No projects listed yet</p>
+          <p className="text-center text-gray-600 py-8">No projects listed yet</p>
         ) : (
           <div className="overflow-hidden rounded-lg shadow">
             <table {...getTableProps()} className="w-full divide-y divide-gray-200">

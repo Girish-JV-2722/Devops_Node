@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTable } from 'react-table';
 import axios from 'axios';
 
-function HomePage() {
+function DeplymentsPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,16 +12,14 @@ function HomePage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // const response = await axios.get('http://localhost:3000/project/getAllProjects'); 
+        // const response = await axios.get('http://localhost:3000/project/getAllProjects');
         // setProjects(response.data);
         setProjects([
-          { projectId: "11", projectName: "Project K" },
-          { projectId: "222", projectName: "Project 2" },
-          { projectId: "3", projectName: "Project 3" },
+          { projectId: "11", projectName: "Project K", status: "successfully deployed", url: "http://example.com/project-k" },
+          { projectId: "222", projectName: "Project 2", status: "failed to deploy", url: "http://example.com/project-2" },
+          { projectId: "3", projectName: "Project 3", status: "yet to configure", url: "http://example.com/project-3" },
         ]);
-        
         setLoading(false);
-        console.log(projects);
       } catch (err) {
         setError(err.message);
         setLoading(false);
@@ -33,13 +31,13 @@ function HomePage() {
   const handleAddProject = () => {
     navigate('/add-project');
   };
-  const handleDeployments = () => {
-    navigate('/deployments');
-  };
 
   const handleConfigure = (projectId) => {
-    // console.log(projectId)
     navigate(`/configure/${projectId}`);
+  };
+
+  const handleAccessLink = (url) => {
+    window.open(url, '_blank');
   };
 
   const columns = React.useMemo(
@@ -62,13 +60,38 @@ function HomePage() {
         ),
         className: 'text-center',
       },
+      {
+        Header: 'Status',
+        accessor: 'status',
+        Cell: ({ value }) => (
+          <span className={`flex items-center justify-center w-36 text-white h-8 py-1 px-2 rounded-lg ${value === 'successfully deployed' ? 'bg-green-600' : value === 'failed to deploy' ? 'bg-red-600' : 'bg-gray-600'}`}>
+            {value}
+          </span>
+        ),
+        className: 'text-center',
+      },
+      {
+        Header: 'Access',
+        accessor: 'url',
+        Cell: ({ row }) => (
+          row.original.status === 'successfully deployed' ? (
+            <button
+              onClick={() => handleAccessLink(row.original.url)}
+              className="bg-blue-500 text-white py-1 px-2 rounded-lg shadow hover:bg-blue-600 transition duration-300"
+            >
+              Link
+            </button>
+          ) : <span className='items-center justify-center py-1 px-5'>-</span>
+        ),
+        className: 'text-center',
+      },
     ],
     []
   );
 
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
     columns,
-    data: projects, // No need to memoize `data`
+    data: projects,
   });
 
   if (loading) {
@@ -83,21 +106,7 @@ function HomePage() {
     <div className="min-h-screen flex justify-center items-center bg-gray-200">
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-          <div className='flex justify-between items-center'>
-          <button
-            onClick={handleAddProject}
-            className="inline-block bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition duration-300 mr-5"
-          >
-            Add Project
-          </button>
-          <button
-            onClick={handleDeployments}
-            className="inline-block bg-yellow-400 text-white py-2 px-4 rounded-lg shadow hover:bg-yellow-500 transition duration-300"
-          >
-            Deployments
-          </button>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Deployments Table</h1>
         </div>
         {projects.length === 0 ? (
           <p className="text-center text-gray-600 py-8">No projects listed yet</p>
@@ -143,4 +152,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default DeplymentsPage;

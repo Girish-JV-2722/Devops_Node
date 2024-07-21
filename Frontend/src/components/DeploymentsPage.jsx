@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTable } from 'react-table';
 import axios from 'axios';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function DeplymentsPage() {
   const navigate = useNavigate();
@@ -28,8 +30,49 @@ function DeplymentsPage() {
     fetchProjects();
   }, []);
 
-  const handleAddProject = () => {
-    navigate('/add-project');
+  const handleTerminateInstance = async (projectId) => {
+    // try {
+    //     const response = await axios.post(`http://localhost:3000/aws/terminateInstance`, { projectId });
+    //     if (response.data.success) {
+    //         toast("Instance terminated successfully");
+    //         // Optionally, update the project status to reflect the termination
+    //         setProjects((prevProjects) => prevProjects.map(project => 
+    //             project.projectId === projectId ? { ...project, status: 'terminated' } : project
+    //         ));
+    //     } else {
+    //         toast("Failed to terminate instance");
+    //     }
+    // } catch (error) {
+    //     toast("Error terminating instance");
+    // }
+
+    try {
+      // Simulated delay to mimic an API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mock response
+      const mockResponse = {
+          data: {
+              success: true, // Change to false to simulate a failed termination
+          }
+      };
+
+      // Use the mock response instead of the actual API call
+      // const response = await axios.post(`http://localhost:3000/aws/terminateInstance`, { projectId });
+      const response = mockResponse;
+
+      if (response.data.success) {
+          toast("Instance terminated successfully");
+          // Optionally, update the project status to reflect the termination
+          setProjects((prevProjects) => prevProjects.map(project => 
+              project.projectId === projectId ? { ...project, status: 'terminated' } : project
+          ));
+      } else {
+          toast("Failed to terminate instance");
+      }
+    } catch (error) {
+        toast("Error terminating instance");
+    }
   };
 
   const handleConfigure = (projectId) => {
@@ -85,6 +128,21 @@ function DeplymentsPage() {
         ),
         className: 'text-center',
       },
+      {
+        Header: 'Terminate EC2 Instance',
+        accessor: 'terminate',
+        Cell: ({ row }) => (
+            row.original.status === 'successfully deployed' ? (
+                <button
+                    onClick={() => handleTerminateInstance(row.original.projectId)}
+                    className="bg-red-500 text-white py-1 px-2 rounded-lg shadow hover:bg-red-600 transition duration-300"
+                >
+                    Terminate
+                </button>
+            ) : <span className='items-center justify-center py-1 px-5'>-</span>
+        ),
+        className: 'text-center',
+    },
     ],
     []
   );
@@ -148,6 +206,7 @@ function DeplymentsPage() {
           </div>
         )}
       </div>
+      <ToastContainer />
     </div>
   );
 }

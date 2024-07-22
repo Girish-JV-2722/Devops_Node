@@ -168,7 +168,7 @@ router.post("/configureApplication", async function (req, res) {
         // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
         // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
         
-        await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
+        const status=await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
          
     
         //deployemnts
@@ -180,7 +180,7 @@ router.post("/configureApplication", async function (req, res) {
           const newDeployment = await Deployment.create({
             userId:user.id,
             applicationId:newApplication.applicationId,
-            status:true,
+            status:status,
             log:"Something",
             environment,
             createdAt: new Date(),

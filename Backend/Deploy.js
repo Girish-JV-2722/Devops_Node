@@ -173,10 +173,12 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,doc
     await pushDockerImage(dockerUsername,dockerPassword);
     const publicIp = await deployToEC2(ec2);
     console.log('Deployment successful. Public IP Address:', publicIp);
+    return true;
   } catch (error) {
     console.error('Deployment failed:', error);
   } finally {
     await removeClonedRepo().catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
+    return false;
   }
 }
 

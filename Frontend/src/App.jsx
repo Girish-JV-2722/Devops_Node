@@ -4,6 +4,8 @@ import FormPage from './components/FormPage';
 import HomePage from './components/HomePage';
 import ProjectDetailsPage from './components/ProjectDetailsPage';
 import './App.css';
+import SuccessPage from './components/successPage';
+import DeplymentsPage from './components/DeploymentsPage';
 
 function App() {
   return (
@@ -11,8 +13,9 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/add-project" element={<ProjectDetailsPage />} />
+        <Route path="/deployments" element={<DeplymentsPage />} />
         <Route path="/configure/:projectId" element={<FormPage />} />
-        <Route path="/configure/success" element={<successPage />} />
+        <Route path="/configure/:projectId/success" element={<SuccessPage />} />
       </Routes>
     </Router>
   );

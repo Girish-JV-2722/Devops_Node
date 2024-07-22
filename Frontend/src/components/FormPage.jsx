@@ -40,6 +40,7 @@ export default function FormPage() {
   const [rerender, setRerender] = useState(false);
   const [token,setToken]=useState(localStorage.getItem("accessToken"));
   const  { projectId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log(projectId);
@@ -122,6 +123,9 @@ export default function FormPage() {
   
 
   const handleSubmit = async (event) => {
+    navigate(`/configure/${projectId}/success`);
+    return;
+    
     event.preventDefault();
 
     console.log("Form Data:", formData);
@@ -146,6 +150,7 @@ export default function FormPage() {
         .then((data) => {
           toast("Successfully sent data to server");
           console.log(data);
+          navigate('/success');
         });
     //   const response = await axios.post(
     //     "http://localhost:3000/configureApplication",
@@ -256,14 +261,14 @@ export default function FormPage() {
                 onChange={handleOnChange}
                 placeholder="React Version"
               />
-              <TextInput
+            </>
+          )}
+          <TextInput
                 name="portNumber"
                 value={formData.portNumber || ""}
                 onChange={handleOnChange}
                 placeholder="Port Number"
-              />
-            </>
-          )}
+          />
           <TextInput
             name="nodeVersion"
             value={formData?.nodeVersion}

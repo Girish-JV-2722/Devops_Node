@@ -12,13 +12,13 @@ function HomePage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/project/getAllProjects'); 
-        setProjects(response.data);
-        // setProjects([
-        //   { projectId: "11", projectName: "Project K" },
-        //   { projectId: "222", projectName: "Project 2" },
-        //   { projectId: "3", projectName: "Project 3" },
-        // ]);
+        // const response = await axios.get('http://localhost:3000/project/getAllProjects'); 
+        // setProjects(response.data);
+        setProjects([
+          { projectId: "11", projectName: "Project K" },
+          { projectId: "222", projectName: "Project 2" },
+          { projectId: "3", projectName: "Project 3" },
+        ]);
         
         setLoading(false);
         console.log(projects);
@@ -32,6 +32,9 @@ function HomePage() {
 
   const handleAddProject = () => {
     navigate('/add-project');
+  };
+  const handleDeployments = () => {
+    navigate('/deployments');
   };
 
   const handleConfigure = (projectId) => {
@@ -81,12 +84,20 @@ function HomePage() {
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+          <div className='flex justify-between items-center'>
           <button
             onClick={handleAddProject}
-            className="inline-block bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition duration-300"
+            className="inline-block bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600 transition duration-300 mr-5"
           >
             Add Project
           </button>
+          <button
+            onClick={handleDeployments}
+            className="inline-block bg-yellow-400 text-white py-2 px-4 rounded-lg shadow hover:bg-yellow-500 transition duration-300"
+          >
+            Deployments
+          </button>
+          </div>
         </div>
         {projects.length === 0 ? (
           <p className="text-center text-gray-600 py-8">No projects listed yet</p>

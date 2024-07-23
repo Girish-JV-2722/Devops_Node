@@ -6,7 +6,7 @@ const AWS = require('aws-sdk');
 const { main } = require('../Deploy');
 const mysql = require("mysql2");
 const fetch = (...args) =>import("node-fetch").then(({ default: fetch }) => fetch(...args));
-
+let deploydata={};
 // Create a connection to the database using environment variables
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -168,8 +168,9 @@ router.post("/configureApplication", async function (req, res) {
         // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
         // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
         
-        const status=await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
+         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
          
+         console.log(deploydata);
     
         //deployemnts
         try {
@@ -180,14 +181,15 @@ router.post("/configureApplication", async function (req, res) {
           const newDeployment = await Deployment.create({
             userId:user.id,
             applicationId:newApplication.applicationId,
-            status:status,
+            status:deploydata.status,
             log:"Something",
             environment,
             createdAt: new Date(),
             updatedAt: new Date()
           });
-      
-          res.status(201).json(newDeployment);
+           
+
+          res.status(201).json({newDeployment,deploydata});
         } catch (error) {
           console.error(error);
           res.status(500).json({ error: 'An error occurred while creating the deployment.' });
@@ -199,5 +201,16 @@ router.post("/configureApplication", async function (req, res) {
     });
 
 });
+
+router.get("/getAllApp", async function (req, res, next) {
+  try {
+    
+    // let projects= await Project.findAll();
+    let deployments= await Deployment.findAll();
+    res.status(200).json({deploydata,deployments});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+  });
 
 module.exports = router;

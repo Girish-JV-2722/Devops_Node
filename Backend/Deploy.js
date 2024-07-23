@@ -163,7 +163,7 @@ function removeClonedRepo() {
 
 // Main function to run all tasks
 async function main(userid,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername) {
- 
+  let publicIp;
   try {
     id=userid;
     console.log(id);
@@ -171,14 +171,15 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,doc
     await cloneRepo(gitUrl);
     await buildDockerImage(dockerUsername);
     await pushDockerImage(dockerUsername,dockerPassword);
-    const publicIp = await deployToEC2(ec2);
+    publicIp = await deployToEC2(ec2);
     console.log('Deployment successful. Public IP Address:', publicIp);
-    return true;
+    const data={status:true,publicIp:publicIp};
+    return data;
   } catch (error) {
     console.error('Deployment failed:', error);
   } finally {
     await removeClonedRepo().catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    return false;
+    return data={status:true,publicIp:publicIp,port:3000};
   }
 }
 

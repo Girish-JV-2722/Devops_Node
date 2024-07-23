@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 const TextInput = ({ name, value, onChange, placeholder, type = 'text' }) => (
   <input
@@ -15,19 +15,22 @@ const TextInput = ({ name, value, onChange, placeholder, type = 'text' }) => (
 );
 
 function ProjectDetailsPage() {
-  const [projectName, setProjectName] = useState('');
-  const [description, setDescription] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [manager, setManager] = useState('');
+  const [formValues, setFormValues] = useState({
+    projectName: '',
+    description: '',
+    clientName: '',
+    manager: ''
+  });
   const navigate = useNavigate();
 
-  const handleSubmit =async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const { projectName, description, clientName, manager } = formValues;
     const newProject = {
       projectName,
       clientName,
       managerName: manager,
-      description,
+      description
     };
 
     try {
@@ -35,59 +38,41 @@ function ProjectDetailsPage() {
       navigate('/');
     } catch (error) {
       console.error("Error adding project:", error);
-      toast("Failed to add project. Please try again.");
+      toast.error("Failed to add project. Please try again.");
     }
   };
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'projectName') setProjectName(value);
-    if (name === 'description') setDescription(value);
-    if (name === 'clientName') setClientName(value);
-    if (name === 'manager') setManager(value);
+    setFormValues(prevValues => ({
+      ...prevValues,
+      [name]: value
+    }));
   };
 
+  const inputs = [
+    { name: 'projectName', placeholder: 'Project Name' },
+    { name: 'description', placeholder: 'Description' },
+    { name: 'clientName', placeholder: 'Client Name' },
+    { name: 'manager', placeholder: 'Manager' }
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 py-8">
       <div className="bg-white shadow-lg rounded-lg p-8 my-8 w-full max-w-lg">
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-900">New Project</h1>
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <TextInput
-              name="projectName"
-              value={projectName}
-              onChange={handleOnChange}
-              placeholder="Project Name"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <TextInput
-              name="description"
-              value={description}
-              onChange={handleOnChange}
-              placeholder="Description"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <TextInput
-              name="clientName"
-              value={clientName}
-              onChange={handleOnChange}
-              placeholder="Client Name"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <TextInput
-              name="manager"
-              value={manager}
-              onChange={handleOnChange}
-              placeholder="Manager"
-              required
-            />
-          </div>
+          {inputs.map((input, index) => (
+            <div key={index} className="mb-4">
+              <TextInput
+                name={input.name}
+                value={formValues[input.name]}
+                onChange={handleOnChange}
+                placeholder={input.placeholder}
+                required
+              />
+            </div>
+          ))}
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 rounded-lg shadow hover:bg-blue-600 transition duration-300"
@@ -96,6 +81,7 @@ function ProjectDetailsPage() {
           </button>
         </form>
       </div>
+      <ToastContainer />
     </div>
   );
 }

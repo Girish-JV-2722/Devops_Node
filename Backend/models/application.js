@@ -32,6 +32,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     projectId: {
       type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false
+    },
+    ipAddress: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    port: {
+      type: DataTypes.INTEGER,
       allowNull: true
     }
   }, {
@@ -46,7 +59,7 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     });
-    Application.belongsTo(models.Project, {
+    Application.belongsTo(models.Projects, {
       foreignKey: 'projectId',
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'

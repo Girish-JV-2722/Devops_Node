@@ -80,7 +80,7 @@ function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-200">
+    <div className="min-h-screen flex justify-center items-center bg-gray-200 py-8">
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Projects</h1>

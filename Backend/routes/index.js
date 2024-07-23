@@ -6,7 +6,7 @@ const AWS = require('aws-sdk');
 const { main } = require('../Deploy');
 const mysql = require("mysql2");
 const fetch = (...args) =>import("node-fetch").then(({ default: fetch }) => fetch(...args));
-
+let deploydata={};
 // Create a connection to the database using environment variables
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -25,6 +25,7 @@ const User = require('../models/user')(sequelize, DataTypes);
 const GitCredentials = require('../models/gitcredentials')(sequelize, DataTypes);
 const DockerhubCredentials = require('../models/dockercredentials')(sequelize, DataTypes);
 const Deployment = require('../models/deployments')(sequelize, DataTypes);
+const Project = require('../models/project')(sequelize, DataTypes);
 
 const Application= require('../models/application')(sequelize, DataTypes);
 // Connect to the database
@@ -147,20 +148,10 @@ router.post("/configureApplication", async function (req, res) {
           return res.status(400).json({ error: "Project ID is missing" });
         }
         
-        const newApplication = await Application.create({
-          region,
-          environment,
-          gitUrl,
-          // scripts,
-          nodeVersion,
-          projectId,
-          userId:data.id,
-        });
-    
         
         
     
-        await newApplication.save();
+        // await newApplication.save();
     
         // const AWS_Accesskey=user.AWS_Accesskey;
         // const AWS_Secretkey=user.AWS_Secretkey;
@@ -168,8 +159,26 @@ router.post("/configureApplication", async function (req, res) {
         // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
         // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
         
-        await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
+         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
          
+         console.log(deploydata);
+
+         //Application
+
+         const newApplication = await Application.create({
+          region,
+          environment,
+          gitUrl,
+          // scripts,
+          nodeVersion,
+          projectId,
+          userId:data.id,
+          status:deploydata.status,
+          ipAddress:deploydata.publicIp,
+          port:deploydata.port,
+        });
+    
+        
     
         //deployemnts
         try {
@@ -180,14 +189,15 @@ router.post("/configureApplication", async function (req, res) {
           const newDeployment = await Deployment.create({
             userId:user.id,
             applicationId:newApplication.applicationId,
-            status:true,
+            status:deploydata.status,
             log:"Something",
             environment,
             createdAt: new Date(),
             updatedAt: new Date()
           });
-      
-          res.status(201).json(newDeployment);
+           
+
+          res.status(201).json({newDeployment,deploydata});
         } catch (error) {
           console.error(error);
           res.status(500).json({ error: 'An error occurred while creating the deployment.' });
@@ -199,5 +209,18 @@ router.post("/configureApplication", async function (req, res) {
     });
 
 });
+
+router.get("/getAllApp", async function (req, res, next) {
+  try {
+    
+    // let projects= await Project.findAll();
+    // let deployments= await Deployment.findAll();
+    let applications=await Application.findAll();
+    let projects=await Project.findAll();
+    res.status(200).json({deploydata,applications,projects});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+  });
 
 module.exports = router;

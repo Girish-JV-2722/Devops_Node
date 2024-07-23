@@ -123,8 +123,8 @@ export default function FormPage() {
   
 
   const handleSubmit = async (event) => {
-    navigate(`/configure/${projectId}/success`);
-    return;
+
+    // return;
     
     event.preventDefault();
 
@@ -150,7 +150,7 @@ export default function FormPage() {
         .then((data) => {
           toast("Successfully sent data to server");
           console.log(data);
-          navigate('/success');
+          navigate(`/configure/${projectId}/success`);
         });
     //   const response = await axios.post(
     //     "http://localhost:3000/configureApplication",

@@ -9,6 +9,10 @@ const sequelize = new Sequelize("autodevops4", "admin", "admin123", {
   dialect: "mysql",
 });
 
+
+const Deployment = require('../models/deployments')(sequelize, DataTypes);
+
+
 const Project = require("../models/project")(sequelize, DataTypes);
 const Application = require("../models/application")(sequelize, DataTypes);
 const gitcredentials = require('../models/gitcredentials')(sequelize, DataTypes);
@@ -82,6 +86,9 @@ router.post("/createApp", async function (req, res, next) {
       res.status(500).json({ error: error.message });
     }
     });
+
+    
+ 
 
     
 module.exports = router;

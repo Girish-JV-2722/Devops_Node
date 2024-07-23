@@ -3,7 +3,7 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
-
+const localPath = "C:\Users\jvgir\Documents\devops\Devops_Node\Backend"
 // Configure AWS
 const ec2 = new AWS.EC2({
   region: 'us-east-1',
@@ -37,7 +37,7 @@ async function buildDockerImage() {
   console.log('Building Docker image...');
   const dockerUsername = process.env.DOCKER_USERNAME;
   await runCommand(`docker rmi -f ${dockerUsername}/firstimage:latest || true`);
-  await runCommand(`docker build -t ${dockerUsername}/firstimage:latest .`);
+  await runCommand(`docker build -t ${dockerUsername}/firstimage:latest ./Frontend.Dockerfile/.`);
   console.log('Docker image built successfully.');
 }
 
@@ -153,6 +153,7 @@ async function main() {
     const publicIp = await deployToEC2();
     console.log('Deployment successful. Public IP Address:', publicIp);
   } catch (error) {
+    await removeClonedRepo().catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);
   } finally {
     await removeClonedRepo().catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));

@@ -1,18 +1,19 @@
 #!/bin/bash
 
-# Update and install necessary packages
-sudo yum update -y
-sudo yum install -y docker
+# Update and install Docker
+sudo apt-get update
+sudo apt-get install -y docker.io
 
 # Start Docker service
-sudo service docker start
+sudo systemctl start docker
+sudo systemctl enable docker
 
-# Pull the Docker image from Docker Hub
-dockerUsername="girish2722" # Replace with your Docker Hub username
-dockerImage="firstimage"
+# Pull the latest Docker images for backend and frontend
+docker pull ${DOCKER_USERNAME}/backend-image:latest
+docker pull ${DOCKER_USERNAME}/frontend-image:latest
 
-docker pull ${dockerUsername}/${dockerImage}
+# Run the backend container
+docker run -d --name backend-container -p 3000:4000 ${DOCKER_USERNAME}/backend-image:latest
 
-# Run the Docker container
-docker run -d -p 3000:4000 ${dockerUsername}/${dockerImage}
-
+# Run the frontend container
+docker run -d --name frontend-container -p 80:80 ${DOCKER_USERNAME}/frontend-image:latest

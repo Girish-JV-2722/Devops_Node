@@ -38,31 +38,14 @@ export default function FormPage() {
   const [formData, setFormData] = useState({});
   const [isFetchingToken, setIsFetchingToken] = useState(false);
   const [rerender, setRerender] = useState(false);
-  const [token,setToken]=useState(localStorage.getItem("accessToken"));
-  const  { projectId } = useParams();
+  const [token, setToken] = useState(localStorage.getItem("accessToken"));
+  const [loading, setLoading] = useState(false); // Add loading state
+  const { projectId } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log(projectId);
-    // async function fetchData() {
-    //   try {
-    //     const response = await axios.get('http://localhost:3000/auth/github/gettoken',{withCredentials:true});
-    //     console.log(response);
-    //     if (response.data.accessToken) {
-    //       setFormData((prevFormData) => ({
-    //         ...prevFormData,
-    //         githubAccessToken: response.data.accessToken
-    //       }));
-    //       console.log(response);
-    //       toast("Successfully obtained GitHub access token");
-    //     } else {
-    //       toast("Failed to obtain GitHub access token");
-    //     }
-    //   } catch (error) {
-    //     toast("Failed to obtain GitHub access token");
-    //   }
-    // }
-    // fetchData();
+
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const codeParams = urlParams.get("code");
@@ -70,37 +53,36 @@ export default function FormPage() {
 
     if (codeParams && localStorage.getItem("accessToken") === null) {
       async function getAccessToken() {
+        setIsFetchingToken(true); // Set fetching token state
         const response = await fetch("http://localhost:3000/getAccessToken?code=" + codeParams, {
           method: "GET",
-        })
+        });
         const data = await response.json();
-        console.log(data)
+        console.log(data);
         if (data.access_token) {
           localStorage.setItem("accessToken", data.access_token);
 
           setFormData((prevFormData) => ({
             ...prevFormData,
-            gitToken:token,
+            gitToken: token,
           }));
           console.log("successfully obtained token");
           toast.success("Successfully obtained GitHub access token");
           setRerender(!rerender);
         } else {
-          
           toast.error("Failed to obtain GitHub access token");
           console.log("failed obtained token");
         }
+        setIsFetchingToken(false); // Reset fetching token state
       }
       getAccessToken();
-    }
-    else{
+    } else {
       console.log("Token already exists");
       setFormData((prevFormData) => ({
         ...prevFormData,
-        gitToken:token,
+        gitToken: token,
       }));
     }
-    // getUserData();
   }, []);
 
   const handleOnChange = (e) => {
@@ -109,9 +91,8 @@ export default function FormPage() {
       ...prevFormData,
       [name]: value,
     }));
-    
   };
-  
+
   const CLIENT_ID = "Ov23liBPsEnGO0AWvNx5";
 
   const handleGetGitHubToken = async () => {
@@ -120,12 +101,8 @@ export default function FormPage() {
     );
     // window.location.href="http://localhost:3000/auth/github/";
   };
-  
 
   const handleSubmit = async (event) => {
-
-    // return;
-    
     event.preventDefault();
 
     console.log("Form Data:", formData);
@@ -135,57 +112,57 @@ export default function FormPage() {
       return;
     }
 
+    setLoading(true); // Set loading state to true
+
     try {
-      await fetch( `http://localhost:3000/configureApplication?projectId=${projectId}`, {
+      await fetch(`http://localhost:3000/configureApplication?projectId=${projectId}`, {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("accessToken"),
           'Content-Type': 'application/json',
-        }, 
-       body: JSON.stringify(formData),
+        },
+        body: JSON.stringify(formData),
       })
-        .then((response) => {
-          return response.json();
-        })
+        .then((response) => response.json())
         .then((data) => {
           toast("Successfully sent data to server");
           console.log(data);
-          navigate(`/configure/${projectId}/success`);
+          navigate(
+        `/configure/${projectId}/success?publicIp=${response.deploydata.publicIp}&port=${response.deploydata.port}`
+      );
+      setLoading(false);
         });
-    //   const response = await axios.post(
-    //     "http://localhost:3000/configureApplication",
-    //     {headers: {
-    //       "Authorization": "Bearer " + localStorage.getItem("accessToken"),
-    //     }
-    //   },
-    //     formData
-    //   );
-    //   if (response.data) {
-    //     toast("Successfully sent data to server");
-    //   } else {
-    //     toast("Failed to send data to server");
-    //   }
-    //   toast("Successfully deployed application");
+
     } catch (error) {
+      setLoading(false);
       toast("Oops! Something went wrong");
-    }
+    } 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 relative">
+      {loading && (
+       <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+       <div className="flex flex-col items-center">
+         <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+         <div className="text-white text-xl font-semibold">Deployment in progress, please wait...</div>
+       </div>
+     </div>
+     
+      )}
       <div className="bg-white p-8 my-8 rounded-lg shadow-lg w-full max-w-lg">
         <h1 className="text-2xl font-bold mb-4 text-center text-gray-900">
           Deploy App on AWS
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
             <TextInput
               name="gitToken"
               value={token}
-              onChange={(e)=>{handleOnChange(e);
-              setToken(localStorage.getItem("accessToken"));
-              }
-              }
+              onChange={(e) => {
+                handleOnChange(e);
+                setToken(localStorage.getItem("accessToken"));
+              }}
               placeholder="GitHub Access Key"
               type="password"
             />
@@ -219,13 +196,6 @@ export default function FormPage() {
             options={awsRegions}
             placeholder="Select AWS Region"
           />
-          
-          {/* <TextInput
-            name="appName"
-            value={formData?.appName}
-            onChange={handleOnChange}
-            placeholder="Application Name"
-          /> */}
           <SelectInput
             name="environment"
             value={formData?.environment}
@@ -264,10 +234,10 @@ export default function FormPage() {
             </>
           )}
           <TextInput
-                name="portNumber"
-                value={formData.portNumber || ""}
-                onChange={handleOnChange}
-                placeholder="Port Number"
+            name="portNumber"
+            value={formData.portNumber || ""}
+            onChange={handleOnChange}
+            placeholder="Port Number"
           />
           <TextInput
             name="nodeVersion"

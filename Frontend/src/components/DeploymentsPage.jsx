@@ -14,13 +14,14 @@ function DeplymentsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // const response = await axios.get('http://localhost:3000/project/getAllProjects');
-        // setProjects(response.data);
-        setProjects([
-          { projectId: "11", projectName: "Project K", status: "successfully deployed", url: "http://example.com/project-k" },
-          { projectId: "222", projectName: "Project 2", status: "failed to deploy", url: "http://example.com/project-2" },
-          { projectId: "3", projectName: "Project 3", status: "yet to configure", url: "http://example.com/project-3" },
-        ]);
+        const response = await axios.get('http://localhost:3000/getAllApp');
+        console.log(response);
+        setProjects(response.data.deployments);
+        // setProjects([
+        //   { projectId: "11", projectName: "Project K", status: "successfully deployed", url: "http://example.com/project-k" },
+        //   { projectId: "222", projectName: "Project 2", status: "failed to deploy", url: "http://example.com/project-2" },
+        //   { projectId: "3", projectName: "Project 3", status: "yet to configure", url: "http://example.com/project-3" },
+        // ]);
         setLoading(false);
       } catch (err) {
         setError(err.message);

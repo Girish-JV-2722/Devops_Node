@@ -9,42 +9,33 @@ usage() {
   exit 1
 }
 
-# Update and install Docker and Docker Compose
+# Update and install Docker
 sudo apt-get update
-sudo apt-get install -y docker.io docker-compose
+sudo dnf install -y docker
+
 
 # Start Docker service
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# Pull the latest Docker images
-docker pull ${DOCKER_USERNAME}/backend-image:latest
-docker pull ${DOCKER_USERNAME}/frontend-image:latest
-
 # Determine which containers to run based on project type
 PROJECT_TYPE=${PROJECT_TYPE}
 
-# Create docker-compose.override.yml based on the project type
-cat > docker-compose.override.yml <<EOL
-version: '3.8'
-
-services:
-EOL
-
 if [ "$PROJECT_TYPE" = "backend" ]; then
-  echo "  backend:" >> docker-compose.override.yml
-  echo "    image: \${DOCKER_USERNAME}/backend-image:latest" >> docker-compose.override.yml
+  docker pull ${DOCKER_USERNAME}/backend-image:latest
+  echo "Running backend container..."
+  docker run -d --name backend-container -p 3000:4000 ${DOCKER_USERNAME}/backend-image:latest
 elif [ "$PROJECT_TYPE" = "frontend" ]; then
-  echo "  frontend:" >> docker-compose.override.yml
-  echo "    image: \${DOCKER_USERNAME}/frontend-image:latest" >> docker-compose.override.yml
+  docker pull ${DOCKER_USERNAME}/frontend-image:latest
+  echo "Running frontend container..."
+  docker run -d --name frontend-container -p 80:80 ${DOCKER_USERNAME}/frontend-image:latest
 elif [ "$PROJECT_TYPE" = "both" ]; then
-  echo "  backend:" >> docker-compose.override.yml
-  echo "    image: \${DOCKER_USERNAME}/backend-image:latest" >> docker-compose.override.yml
-  echo "  frontend:" >> docker-compose.override.yml
-  echo "    image: \${DOCKER_USERNAME}/frontend-image:latest" >> docker-compose.override.yml
+  # Pull the latest Docker images
+  docker pull ${DOCKER_USERNAME}/backend-image:latest
+  docker pull ${DOCKER_USERNAME}/frontend-image:latest
+  echo "Running both backend and frontend containers..."
+  docker run -d --name backend-container -p 3000:4000 ${DOCKER_USERNAME}/backend-image:latest
+  docker run -d --name frontend-container -p 80:80 ${DOCKER_USERNAME}/frontend-image:latest
 else
   usage
 fi
-
-# Run docker-compose up with the appropriate services
-docker-compose up -d

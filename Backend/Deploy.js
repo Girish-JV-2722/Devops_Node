@@ -124,25 +124,31 @@ async function getOrCreateSecurityGroup() {
   });
 }
 
-async function createKeyPair(keyName) {
-  const params = {
-    KeyName: keyName,
-  };
-  return new Promise((resolve, reject) => {
-    ec2.createKeyPair(params, (err, data) => {
-      if (err) {
-        console.error('Error creating key pair:', err);
-        reject(err);
-      } else {
-        const keyMaterial = data.KeyMaterial;
-        const keyPath = path.join(__dirname, `${keyName}.pem`);
-        fs.writeFileSync(keyPath, keyMaterial);
-        console.log('Key pair created and saved to:', keyPath);
-        resolve(keyPath);
-      }
-    });
-  });
-}
+// async function createKeyPair(keyName) {
+//   const keyPath = path.join(__dirname, `${keyName}.pem`);
+//   if (fs.existsSync(keyPath)) {
+//     console.log(`Key pair already exists at ${keyPath}`);
+//     return keyPath;
+//   }
+
+//   const params = {
+//     KeyName: keyName,
+//   };
+//   return new Promise((resolve, reject) => {
+//     ec2.createKeyPair(params, (err, data) => {
+//       if (err) {
+//         console.error('Error creating key pair:', err);
+//         reject(err);
+//       } else {
+//         const keyMaterial = data.KeyMaterial;
+//         fs.writeFileSync(keyPath, keyMaterial);
+//         fs.chmodSync(keyPath, '400');
+//         console.log('Key pair created and saved to:', keyPath);
+//         resolve(keyPath);
+//       }
+//     });
+//   });
+// }
 
 async function addInboundRules(securityGroupId) {
   const params = {
@@ -186,15 +192,15 @@ async function deployToEC2(projectType) {
     .replace(/\${PROJECT_TYPE}/g, projectType);
   
   const securityGroupId = await getOrCreateSecurityGroup();
-  const keyName = 'my-new-key-pair';
-  const keyPath = await createKeyPair(keyName);
+  // const keyName = 'Hello-world';
+  // const keyPath = await createKeyPair(keyName);
 
   const params = {
     ImageId: 'ami-0c9235cef0e595489',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
-    KeyName: keyName,
+    // KeyName: keyName,
     SecurityGroupIds: [securityGroupId],
     UserData: Buffer.from(userDataScript).toString('base64'),
   };

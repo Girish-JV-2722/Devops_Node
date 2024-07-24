@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
+import { API_URL } from '../constants/api';
 
 const TextInput = ({ name, value, onChange, placeholder, type = 'text' }) => (
   <input
@@ -34,7 +35,7 @@ function ProjectDetailsPage() {
     };
 
     try {
-      const response = await axios.post('http://localhost:3000/project/create', newProject);
+      const response = await axios.post(`${API_URL}/project/create`, newProject);
       navigate('/');
     } catch (error) {
       console.error("Error adding project:", error);

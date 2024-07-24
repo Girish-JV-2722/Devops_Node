@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTable } from 'react-table';
 import axios from 'axios';
+import { API_URL } from '../constants/api';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ function HomePage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/project/getAllProjects'); 
+        const response = await axios.get(`${API_URL}/project/getAllProjects`); 
         setProjects(response.data);
         // setProjects([
         //   { projectId: "11", projectName: "Project K" },

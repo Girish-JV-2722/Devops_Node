@@ -14,7 +14,7 @@ function DeploymentsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        //const response = await axios.get('http://localhost:3000/getAllApp');
+        //const response = await axios.get(`${API_URL}/getAllApp`);
 
         // Combine applications and projects data
         const combinedData = response.data.projects.map(project => {

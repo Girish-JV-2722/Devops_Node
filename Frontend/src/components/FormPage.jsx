@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { awsRegions } from "../constants/regions";
 import { useNavigate, useParams } from "react-router-dom";
+import { API_URL, GITHUB_URL } from '../constants/api';
 
 const TextInput = ({ name, value, onChange, placeholder, type = "text" }) => (
   <input
@@ -54,7 +55,7 @@ export default function FormPage() {
     if (codeParams && localStorage.getItem("accessToken") === null) {
       async function getAccessToken() {
         setIsFetchingToken(true); // Set fetching token state
-        const response = await fetch("http://localhost:3000/getAccessToken?code=" + codeParams, {
+        const response = await fetch(`${API_URL}/getAccessToken?code=` + codeParams, {
           method: "GET",
         });
         const data = await response.json();
@@ -97,7 +98,7 @@ export default function FormPage() {
 
   const handleGetGitHubToken = async () => {
     window.location.assign(
-      "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID
+      GITHUB_URL + CLIENT_ID
     );
     // window.location.href="http://localhost:3000/auth/github/";
   };
@@ -115,7 +116,7 @@ export default function FormPage() {
     setLoading(true); // Set loading state to true
 
     try {
-      await fetch(`http://localhost:3000/configureApplication?projectId=${projectId}`, {
+      await fetch(`${API_URL}/configureApplication?projectId=${projectId}`, {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("accessToken"),

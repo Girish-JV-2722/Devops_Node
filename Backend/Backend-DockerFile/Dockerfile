@@ -5,7 +5,7 @@ FROM node:14
 WORKDIR /app
 
 # Copy the rest of your application code
-COPY ./nodejs/. .
+COPY ./cloned-repo/. .
 
 # Install any needed dependencies
 RUN npm install

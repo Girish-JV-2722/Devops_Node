@@ -1,23 +1,9 @@
 {
   "development": {
     "username": "admin",
-    "password": "admin123",
-    "database": "autodevops4",
-    "host": "10.2.122.121", 
-    "dialect": "mysql"
-  },
-  "test": {
-    "username": "root",
-    "password": null,
-    "database": "database_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
-  },
-  "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "password": "admin",
+    "database": "Db_Node",
+    "host": "VEDAGIRISH\\SQLEXPRESS", 
+    "dialect": "mssql"
   }
 }

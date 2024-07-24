@@ -27,12 +27,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     }
   }, {
-    tableName: 'Deployments',
-    timestamps: true
+    tableName: 'Deployments', // Ensure this matches your database table name
+    timestamps: true // Adds createdAt and updatedAt columns
   });
 
   Deployments.associate = function(models) {
-    // associations can be defined here
+    // Ensure that `models.Users` and `models.Applications` exist and are correctly defined
     Deployments.belongsTo(models.Users, {
       foreignKey: 'userId',
       onUpdate: 'CASCADE',

@@ -90,9 +90,10 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
       DB_NAME: ${MYSQL_DATABASE}
       DB_PORT: 3306
     ports:
-      - "3000:4000"
+      - "80:3000"
     depends_on:
       - mysql
+    
 
 volumes:
   mysql-data:
@@ -102,7 +103,9 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
   frontend:
     image: ${DOCKER_USERNAME}/frontend-image:latest
     ports:
-      - "3000:3000"
+      - "80:80"
+    environment:
+      VITE_BACKEND_URL: ${BACKEND_IP}
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
@@ -115,9 +118,10 @@ elif [ "$PROJECT_TYPE" = "both" ]; then
       DB_NAME: your_database_name
       DB_PORT: 3306
     ports:
-      - "3000:3000"
+      - "80:3000"
     depends_on:
       - mysql
+  
 
   frontend:
     image: ${DOCKER_USERNAME}/frontend-image:latest
@@ -132,3 +136,10 @@ fi
 # Run docker-compose up with the appropriate services
 cd /home/ec2-user
 docker-compose up -d
+
+# Wait for backend service to be ready
+echo "Waiting for backend service to be ready..."
+sleep 30
+
+docker-compose exec backend npx sequelize db:migrate
+

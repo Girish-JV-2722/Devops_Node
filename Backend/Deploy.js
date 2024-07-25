@@ -42,6 +42,8 @@ async function cloneRepo(url, targetDir) {
   }
 }
 
+
+
 async function buildDockerImageBackend() {
   try {
     console.log('Building Docker image for backend...');
@@ -156,8 +158,8 @@ async function addInboundRules(securityGroupId) {
   });
 }
 
-// Deploy to EC2
-async function deployToEC2(projectType) {
+//Backend Deploy to EC2
+async function deployToEC2(projectType,backendIp) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
@@ -168,6 +170,46 @@ async function deployToEC2(projectType) {
     .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
     .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
     .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD);
+  
+  const securityGroupId = await getOrCreateSecurityGroup();
+
+  const params = {
+    ImageId: 'ami-0427090fd1714168b',
+    InstanceType: 't2.micro',
+    MaxCount: 1,
+    MinCount: 1,
+    SecurityGroupIds: [securityGroupId],
+    UserData: Buffer.from(userDataScript).toString('base64'),
+  };
+
+  return new Promise((resolve, reject) => {
+    ec2.runInstances(params, async (err, data) => {
+      if (err) {
+        console.error('Error', err);
+        reject(err);
+      } else {
+        const instanceId = data.Instances[0].InstanceId;
+        console.log('Instance ID:', instanceId);
+
+        // Wait for the instance to reach the 'running' state
+        await waitForInstanceToRun(instanceId);
+        const publicIp = await getPublicIpAddress(instanceId);
+        resolve(publicIp);
+      }
+    });
+  });
+}
+
+//Frontend deploying
+async function deployFrontendToEC2(projectType,backendIp) {
+  console.log('Deploying to EC2...');
+
+  // Read deploy.sh file and replace placeholders
+  const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
+    .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
+    .replace(/\${PROJECT_TYPE}/g, projectType)
+    .replace(/\${BACKEND_IP}/g,backendIp);
+    
   
   const securityGroupId = await getOrCreateSecurityGroup();
 
@@ -249,18 +291,20 @@ async function main() {
   const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
 
   try {
-    if (projectType === 'backend' || projectType === 'both') {
+   
       await cloneRepo(backendRepoUrl, targetDir_backend);
       await buildDockerImageBackend();
       await pushDockerImage('backend-image');
-    }
-    if (projectType === 'frontend' || projectType === 'both') {
-      await cloneRepo(frontendRepoUrl, targetDir_frontend);
-      await buildDockerImageFrontend();
-      await pushDockerImage('frontend-image');
-    }
-    const publicIp = await deployToEC2(projectType);
-    console.log('Deployment successful. Public IP Address:', publicIp);
+    
+   
+      // await cloneRepo(frontendRepoUrl, targetDir_frontend);
+      // await buildDockerImageFrontend();
+      // await pushDockerImage('frontend-image');
+    
+      const backendIp = await deployToEC2('backend');
+      // const publicIp = await deployFrontendToEC2('frontend',backendIp);
+      // console.log('Deployment successful. Public IP Address:', publicIp);
+      console.log('Deployment successful. Public IP Address:', backendIp);
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);

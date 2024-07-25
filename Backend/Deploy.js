@@ -168,7 +168,7 @@ async function deployToEC2(projectType) {
   const securityGroupId = await getOrCreateSecurityGroup();
 
   const params = {
-    ImageId: 'ami-0c9235cef0e595489',
+    ImageId: 'ami-0427090fd1714168b',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
@@ -242,7 +242,7 @@ async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
 
 // Main function to run all tasks
 async function main() {
-  const projectType = 'frontend'; // Change this value to 'frontend' or 'both' as needed
+  const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
 
   try {
     if (projectType === 'backend' || projectType === 'both') {

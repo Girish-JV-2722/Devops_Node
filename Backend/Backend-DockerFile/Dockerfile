@@ -5,7 +5,7 @@ FROM node:14
 WORKDIR /app
 
 # Copy the rest of your application code
-COPY ./cloned-repo-Backend/. .
+COPY ./cloned-repo-backend/. .
 
 # Install any needed dependencies
 RUN npm install

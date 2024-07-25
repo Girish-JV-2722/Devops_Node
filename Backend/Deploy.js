@@ -11,10 +11,10 @@ const ec2 = new AWS.EC2({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
 
-const repoUrl = process.env.REPO_URL;
 const backendRepoUrl = process.env.BACKEND_REPO_URL;
 const frontendRepoUrl = process.env.FRONTEND_REPO_URL;
-const targetDir = "C:\\Users\\jvgir\\Documents\\devops\\Devops_Node\\Backend\\cloned-repo";
+const targetDir_backend = "./cloned-repo-backend";
+const targetDir_frontend = "./cloned-repo-frontend";
 
 function runCommand(command, options = {}) {
   return new Promise((resolve, reject) => {
@@ -28,7 +28,6 @@ function runCommand(command, options = {}) {
   });
 }
 
-// Clone the Git repository
 async function cloneRepo(url, targetDir) {
   try {
     if (!fsExtra.existsSync(targetDir)) {
@@ -66,7 +65,7 @@ async function buildDockerImageFrontend() {
       throw new Error('DOCKER_USERNAME environment variable is not set.');
     }
     await runCommand(`docker rmi -f ${dockerUsername}/frontend-image:latest || true`);
-    await runCommand(`docker build -t ${dockerUsername}/frontend-image:latest -f ./frontend.Dockerfile .`);
+    await runCommand(`docker build -t ${dockerUsername}/frontend-image:latest -f ./frontend-Dockerfile/Dockerfile .`);
     console.log('Frontend Docker image built successfully.');
   } catch (error) {
     console.error(`Failed to build Docker image: ${error}`);
@@ -124,31 +123,6 @@ async function getOrCreateSecurityGroup() {
   });
 }
 
-// async function createKeyPair(keyName) {
-//   const keyPath = path.join(__dirname, `${keyName}.pem`);
-//   if (fs.existsSync(keyPath)) {
-//     console.log(`Key pair already exists at ${keyPath}`);
-//     return keyPath;
-//   }
-
-//   const params = {
-//     KeyName: keyName,
-//   };
-//   return new Promise((resolve, reject) => {
-//     ec2.createKeyPair(params, (err, data) => {
-//       if (err) {
-//         console.error('Error creating key pair:', err);
-//         reject(err);
-//       } else {
-//         const keyMaterial = data.KeyMaterial;
-//         fs.writeFileSync(keyPath, keyMaterial);
-//         fs.chmodSync(keyPath, '400');
-//         console.log('Key pair created and saved to:', keyPath);
-//         resolve(keyPath);
-//       }
-//     });
-//   });
-// }
 
 async function addInboundRules(securityGroupId) {
   const params = {
@@ -192,15 +166,12 @@ async function deployToEC2(projectType) {
     .replace(/\${PROJECT_TYPE}/g, projectType);
   
   const securityGroupId = await getOrCreateSecurityGroup();
-  // const keyName = 'Hello-world';
-  // const keyPath = await createKeyPair(keyName);
 
   const params = {
     ImageId: 'ami-0c9235cef0e595489',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
-    // KeyName: keyName,
     SecurityGroupIds: [securityGroupId],
     UserData: Buffer.from(userDataScript).toString('base64'),
   };
@@ -259,9 +230,10 @@ function getPublicIpAddress(instanceId) {
 }
 
 // Function to remove the cloned repository
-async function removeClonedRepo(localPath) {
+async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
   try {
-    await fsExtra.emptyDir(localPath);
+    await fsExtra.emptyDir(targetDir_backend);
+    await fsExtra.emptyDir(targetDir_frontend);
     console.log('Cloned repository contents removed successfully.');
   } catch (error) {
     console.error(`Failed to remove cloned repository: ${error.message}`);
@@ -270,25 +242,26 @@ async function removeClonedRepo(localPath) {
 
 // Main function to run all tasks
 async function main() {
-  const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
+  const projectType = 'frontend'; // Change this value to 'frontend' or 'both' as needed
 
   try {
-    await cloneRepo(repoUrl, targetDir);
     if (projectType === 'backend' || projectType === 'both') {
+      await cloneRepo(backendRepoUrl, targetDir_backend);
       await buildDockerImageBackend();
       await pushDockerImage('backend-image');
     }
     if (projectType === 'frontend' || projectType === 'both') {
+      await cloneRepo(frontendRepoUrl, targetDir_frontend);
       await buildDockerImageFrontend();
       await pushDockerImage('frontend-image');
     }
     const publicIp = await deployToEC2(projectType);
     console.log('Deployment successful. Public IP Address:', publicIp);
   } catch (error) {
-    await removeClonedRepo(targetDir).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
+    await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);
   } finally {
-    await removeClonedRepo(targetDir).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
+    await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
   }
 }
 

@@ -163,7 +163,11 @@ async function deployToEC2(projectType) {
   // Read deploy.sh file and replace placeholders
   const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
     .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
-    .replace(/\${PROJECT_TYPE}/g, projectType);
+    .replace(/\${PROJECT_TYPE}/g, projectType)
+    .replace(/\${MYSQL_ROOT_PASSWORD}/g, process.env.MYSQL_ROOT_PASSWORD)
+    .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
+    .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
+    .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD);
   
   const securityGroupId = await getOrCreateSecurityGroup();
 

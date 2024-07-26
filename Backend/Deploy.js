@@ -93,6 +93,31 @@ async function addconfig(){
     console.error('Error:', error);
   }
 }
+
+async function updateOrCreateEnvFile(repoPath, backendIp) {
+  const envFilePath = path.join(repoPath, '.env');
+  const envVar = `VITE_BACKEND_URL="${backendIp}"`;
+  
+  if (fs.existsSync(envFilePath)) {
+    // Read the existing .env file
+    let envFileContent = fs.readFileSync(envFilePath, 'utf-8');
+    
+    if (envFileContent.includes('VITE_BACKEND_URL')) {
+      // Update the existing VITE_BACKEND_URL
+      envFileContent = envFileContent.replace(/VITE_BACKEND_URL=.*/, envVar);
+    } else {
+      // Append the VITE_BACKEND_URL variable
+      envFileContent += `\n${envVar}`;
+    }
+    
+    // Write the updated content back to the .env file
+    fs.writeFileSync(envFilePath, envFileContent, 'utf-8');
+  } else {
+    // Create a new .env file with the VITE_BACKEND_URL variable
+    fs.writeFileSync(envFilePath, envVar, 'utf-8');
+  }
+}
+
 async function buildDockerImageBackend() {
   try {
     console.log('Building Docker image for backend...');
@@ -346,15 +371,17 @@ async function main() {
       await buildDockerImageBackend();
       await pushDockerImage('backend-image');
     
-   
       await cloneRepo(frontendRepoUrl, targetDir_frontend);
+      const backendIp = await deployToEC2('backend');
+      console.log('Deployment successful. backend IP Address:', backendIp);
+
+      await updateOrCreateEnvFile(targetDir_frontend, backendIp);
       await buildDockerImageFrontend();
       await pushDockerImage('frontend-image');
-    
-      const backendIp = await deployToEC2('backend');
       const publicIp = await deployFrontendToEC2('frontend',backendIp);
+
       console.log('Deployment successful. frontend IP Address:', publicIp);
-      console.log('Deployment successful. backend IP Address:', backendIp);
+      
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);

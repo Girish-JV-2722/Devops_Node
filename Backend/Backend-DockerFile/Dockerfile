@@ -11,7 +11,7 @@ COPY ./cloned-repo-backend/. .
 RUN npm install
 
 # Make port 8080 available to the world outside this container
-EXPOSE 4000
+EXPOSE 3000
 
 # Define the command to run your app
-CMD ["npm", "run", "prod"]
+CMD ["npm", "start"]

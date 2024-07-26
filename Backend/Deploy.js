@@ -3,6 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const AWS = require('aws-sdk');
 const fsExtra = require('fs-extra');
+
 require('dotenv').config();
 
 const ec2 = new AWS.EC2({
@@ -42,6 +43,56 @@ async function cloneRepo(url, targetDir) {
   }
 }
 
+
+async function addconfig(){
+  try {
+    
+  
+    // Define paths
+    const configDir = path.join(targetDir_backend, 'config');
+    const oldConfigFile = path.join(configDir, 'config.json');
+    const newConfigFile = path.join(configDir, 'config.js');
+
+    console.log("mandar"+oldConfigFile);
+    // Remove existing config.json if it exists
+    if (await fsExtra.pathExists(oldConfigFile)) {
+      await fsExtra.remove(oldConfigFile);
+      console.log('Existing config.json removed');
+    }
+
+    // New config.js content
+    const newConfigContent = `module.exports = {
+      development: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME || 'yourdatabase',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      },
+      test: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME_TEST || 'yourdatabase_test',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      },
+      prod: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME_PRODUCTION || 'yourdatabase_production',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      }
+    };`;
+
+    // Write new config.js
+    await fsExtra.outputFile(newConfigFile, newConfigContent);
+    console.log('New config.js added successfully');
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
 async function buildDockerImageBackend() {
   try {
     console.log('Building Docker image for backend...');
@@ -156,19 +207,63 @@ async function addInboundRules(securityGroupId) {
   });
 }
 
-// Deploy to EC2
+//Backend Deploy to EC2
 async function deployToEC2(projectType) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
   const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
     .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
-    .replace(/\${PROJECT_TYPE}/g, projectType);
+    .replace(/\${PROJECT_TYPE}/g, projectType)
+    .replace(/\${MYSQL_ROOT_PASSWORD}/g, process.env.MYSQL_ROOT_PASSWORD)
+    .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
+    .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
+    .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD);
   
   const securityGroupId = await getOrCreateSecurityGroup();
 
   const params = {
-    ImageId: 'ami-0c9235cef0e595489',
+    ImageId: 'ami-0427090fd1714168b',
+    InstanceType: 't2.micro',
+    MaxCount: 1,
+    MinCount: 1,
+    SecurityGroupIds: [securityGroupId],
+    UserData: Buffer.from(userDataScript).toString('base64'),
+  };
+
+  return new Promise((resolve, reject) => {
+    ec2.runInstances(params, async (err, data) => {
+      if (err) {
+        console.error('Error', err);
+        reject(err);
+      } else {
+        const instanceId = data.Instances[0].InstanceId;
+        console.log('Instance ID:', instanceId);
+
+        // Wait for the instance to reach the 'running' state
+        await waitForInstanceToRun(instanceId);
+        const publicIp = await getPublicIpAddress(instanceId);
+        resolve(publicIp);
+      }
+    });
+  });
+}
+
+//Frontend deploying
+async function deployFrontendToEC2(projectType,backendIp) {
+  console.log('Deploying to EC2...');
+
+  // Read deploy.sh file and replace placeholders
+  const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
+    .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
+    .replace(/\${PROJECT_TYPE}/g, projectType)
+    .replace(/\${BACKEND_IP}/g,backendIp);
+    
+  
+  const securityGroupId = await getOrCreateSecurityGroup();
+
+  const params = {
+    ImageId: 'ami-0427090fd1714168b',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
@@ -242,21 +337,24 @@ async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
 
 // Main function to run all tasks
 async function main() {
-  const projectType = 'frontend'; // Change this value to 'frontend' or 'both' as needed
+  const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
 
   try {
-    if (projectType === 'backend' || projectType === 'both') {
+   
       await cloneRepo(backendRepoUrl, targetDir_backend);
+      await addconfig();
       await buildDockerImageBackend();
       await pushDockerImage('backend-image');
-    }
-    if (projectType === 'frontend' || projectType === 'both') {
+    
+   
       await cloneRepo(frontendRepoUrl, targetDir_frontend);
       await buildDockerImageFrontend();
       await pushDockerImage('frontend-image');
-    }
-    const publicIp = await deployToEC2(projectType);
-    console.log('Deployment successful. Public IP Address:', publicIp);
+    
+      const backendIp = await deployToEC2('backend');
+      const publicIp = await deployFrontendToEC2('frontend',backendIp);
+      console.log('Deployment successful. frontend IP Address:', publicIp);
+      console.log('Deployment successful. backend IP Address:', backendIp);
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);

@@ -108,7 +108,7 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
     ports:
       - "80:80"
     environment:
-      BACKEND_URL: ${BACKEND_IP}
+      VITE_BACKEND_URL: ${BACKEND_IP}
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL

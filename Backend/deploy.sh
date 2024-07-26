@@ -62,8 +62,13 @@ PROJECT_TYPE=${PROJECT_TYPE}
 # Create docker-compose.yml based on the project type
 cat > /home/ec2-user/docker-compose.yml <<EOL
 version: '3.8'
-
 services:
+
+EOL
+
+
+if [ "$PROJECT_TYPE" = "backend" ]; then
+  cat >> /home/ec2-user/docker-compose.yml <<EOL
   mysql:
     image: mysql:5.7
     container_name: mysql_db
@@ -77,10 +82,9 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
-EOL
 
-if [ "$PROJECT_TYPE" = "backend" ]; then
-  cat >> /home/ec2-user/docker-compose.yml <<EOL
+
+
   backend:
     image: ${DOCKER_USERNAME}/backend-image:latest
     environment:
@@ -94,7 +98,6 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
     depends_on:
       - mysql
     
-
 volumes:
   mysql-data:
 EOL
@@ -105,7 +108,7 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
     ports:
       - "80:80"
     environment:
-      VITE_BACKEND_URL: ${BACKEND_IP}
+      BACKEND_URL: ${BACKEND_IP}
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL

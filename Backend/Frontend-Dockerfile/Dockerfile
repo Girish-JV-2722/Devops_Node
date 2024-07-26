@@ -10,7 +10,7 @@ COPY ./cloned-repo-frontend/. .
 RUN npm install
 
 # Build the React application
-RUN npm run build
+# RUN npm run build
 
 # Install a simple HTTP server to serve static files
 RUN npm install -g serve
@@ -19,4 +19,4 @@ RUN npm install -g serve
 EXPOSE 80
 
 # Command to run the frontend application
-CMD ["serve", "-s", "build"]
+CMD ["npm", "run", "dev"]

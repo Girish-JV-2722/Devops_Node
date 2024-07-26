@@ -3,6 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const AWS = require('aws-sdk');
 const fsExtra = require('fs-extra');
+
 require('dotenv').config();
 
 const ec2 = new AWS.EC2({
@@ -43,7 +44,55 @@ async function cloneRepo(url, targetDir) {
 }
 
 
+async function addconfig(){
+  try {
+    
+  
+    // Define paths
+    const configDir = path.join(targetDir_backend, 'config');
+    const oldConfigFile = path.join(configDir, 'config.json');
+    const newConfigFile = path.join(configDir, 'config.js');
 
+    console.log("mandar"+oldConfigFile);
+    // Remove existing config.json if it exists
+    if (await fsExtra.pathExists(oldConfigFile)) {
+      await fsExtra.remove(oldConfigFile);
+      console.log('Existing config.json removed');
+    }
+
+    // New config.js content
+    const newConfigContent = `module.exports = {
+      development: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME || 'yourdatabase',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      },
+      test: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME_TEST || 'yourdatabase_test',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      },
+      prod: {
+        username: process.env.DB_USER || 'youruser',
+        password: process.env.DB_PASSWORD || 'yourpassword',
+        database: process.env.DB_NAME_PRODUCTION || 'yourdatabase_production',
+        host: process.env.DB_HOST || 'db',
+        dialect: 'mysql'
+      }
+    };`;
+
+    // Write new config.js
+    await fsExtra.outputFile(newConfigFile, newConfigContent);
+    console.log('New config.js added successfully');
+
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
 async function buildDockerImageBackend() {
   try {
     console.log('Building Docker image for backend...');
@@ -159,7 +208,7 @@ async function addInboundRules(securityGroupId) {
 }
 
 //Backend Deploy to EC2
-async function deployToEC2(projectType,backendIp) {
+async function deployToEC2(projectType) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
@@ -293,18 +342,19 @@ async function main() {
   try {
    
       await cloneRepo(backendRepoUrl, targetDir_backend);
+      await addconfig();
       await buildDockerImageBackend();
       await pushDockerImage('backend-image');
     
    
-      // await cloneRepo(frontendRepoUrl, targetDir_frontend);
-      // await buildDockerImageFrontend();
-      // await pushDockerImage('frontend-image');
+      await cloneRepo(frontendRepoUrl, targetDir_frontend);
+      await buildDockerImageFrontend();
+      await pushDockerImage('frontend-image');
     
       const backendIp = await deployToEC2('backend');
-      // const publicIp = await deployFrontendToEC2('frontend',backendIp);
-      // console.log('Deployment successful. Public IP Address:', publicIp);
-      console.log('Deployment successful. Public IP Address:', backendIp);
+      const publicIp = await deployFrontendToEC2('frontend',backendIp);
+      console.log('Deployment successful. frontend IP Address:', publicIp);
+      console.log('Deployment successful. backend IP Address:', backendIp);
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);

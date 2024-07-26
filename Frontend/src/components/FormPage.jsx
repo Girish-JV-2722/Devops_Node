@@ -107,7 +107,7 @@ export default function FormPage() {
     event.preventDefault();
 
     console.log("Form Data:", formData);
-
+    
     if (!formData) {
       toast("Form data is incomplete");
       return;
@@ -217,14 +217,14 @@ export default function FormPage() {
             placeholder="Docker Hub Password"
             type="password"
           />
-          <SelectInput
+          {/* <SelectInput
             name="technology"
             value={formData?.technology}
             onChange={handleOnChange}
             options={["React", "Node"]}
             placeholder="Select Technology"
-          />
-          {formData?.technology === "React" && (
+          /> */}
+          {/* {formData?.technology === "React" && (
             <>
               <TextInput
                 name="reactVersion"
@@ -233,7 +233,7 @@ export default function FormPage() {
                 placeholder="React Version"
               />
             </>
-          )}
+          )} */}
           <TextInput
             name="portNumber"
             value={formData.portNumber || ""}
@@ -259,12 +259,17 @@ export default function FormPage() {
             placeholder="App Build Command"
           />
           <TextInput
-            name="gitUrl"
-            value={formData?.gitUrl}
+            name="frontendRepoUrl"
+            value={formData?.frontendRepoUrl}
             onChange={handleOnChange}
-            placeholder="GitHub Repository"
+            placeholder="Frontend GitHub Repository"
           />
-
+          <TextInput
+            name="backendRepoUrl"
+            value={formData?.backendRepoUrl}
+            onChange={handleOnChange}
+            placeholder="Backend GitHub Repository"
+          />
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"

@@ -96,7 +96,7 @@ async function addconfig(){
 
 async function updateOrCreateEnvFile(repoPath, backendIp) {
   const envFilePath = path.join(repoPath, '.env');
-  const envVar = `VITE_BACKEND_URL="${backendIp}"`;
+  const envVar = `VITE_BACKEND_URL="http://${backendIp}"`;
   
   if (fs.existsSync(envFilePath)) {
     // Read the existing .env file

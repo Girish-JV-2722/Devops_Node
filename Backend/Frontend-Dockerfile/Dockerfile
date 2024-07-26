@@ -5,15 +5,13 @@ FROM node:18
 WORKDIR /usr/src/app
 
 # Copy the package.json and package-lock.json first to leverage Docker cache
-
+COPY ./cloned-repo-frontend/package*.json ./
 
 # Install dependencies
-
+RUN npm install
 
 # Copy the rest of the application code
 COPY ./cloned-repo-frontend/. .
-
-RUN npm install
 
 # Build the React application with Vite
 RUN npm run build

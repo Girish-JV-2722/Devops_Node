@@ -15,8 +15,213 @@ function DeploymentsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get(`${API_URL}/getAllApp`);
-        console.log(response.data);
+        // const response = await axios.get(`${API_URL}/getAllApp`);
+        // console.log(response.data);
+        const response = {
+          data : {
+            "deploydata": {
+                "status": true,
+                "publicIp": "52.91.237.149",
+                "port": "3000",
+                "frontendInstanceId": "i-0e3de897255172c11",
+                "backendInstanceId": "i-0bdbd3e7e1a28b3d1"
+            },
+            "applications": [
+                {
+                    "applicationId": 5,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": null,
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": null,
+                    "projectId": 12,
+                    "status": false,
+                    "ipAddress": null,
+                    "port": null,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": "i-056a21b707a3372a2",
+                    "createdAt": "2024-07-27T12:34:56.000Z",
+                    "updatedAt": "2024-07-27T12:34:56.000Z"
+                },
+                {
+                    "applicationId": 123,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 13,
+                    "status": true,
+                    "ipAddress": null,
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-28T18:05:17.000Z",
+                    "updatedAt": "2024-07-28T18:05:17.000Z"
+                },
+                {
+                    "applicationId": 124,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 13,
+                    "status": true,
+                    "ipAddress": "18.234.120.32",
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-28T18:54:57.000Z",
+                    "updatedAt": "2024-07-28T18:54:57.000Z"
+                },
+                {
+                    "applicationId": 125,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 13,
+                    "status": true,
+                    "ipAddress": "98.80.227.17",
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-28T19:05:49.000Z",
+                    "updatedAt": "2024-07-28T19:05:49.000Z"
+                },
+                {
+                    "applicationId": 126,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 13,
+                    "status": true,
+                    "ipAddress": null,
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-28T19:15:26.000Z",
+                    "updatedAt": "2024-07-28T19:15:26.000Z"
+                },
+                {
+                    "applicationId": 127,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 14,
+                    "status": true,
+                    "ipAddress": "18.234.73.206",
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-29T04:37:42.000Z",
+                    "updatedAt": "2024-07-29T04:37:42.000Z"
+                },
+                {
+                    "applicationId": 128,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 15,
+                    "status": true,
+                    "ipAddress": "34.230.51.28",
+                    "port": 3000,
+                    "backendInstanceId": null,
+                    "frontendInstanceId": null,
+                    "createdAt": "2024-07-29T05:04:03.000Z",
+                    "updatedAt": "2024-07-29T05:04:03.000Z"
+                },
+                {
+                    "applicationId": 131,
+                    "userId": 90469953,
+                    "region": "us-east-1",
+                    "environment": "EC2",
+                    "gitUrl": null,
+                    "scripts": null,
+                    "nodeVersion": "14",
+                    "projectId": 16,
+                    "status": true,
+                    "ipAddress": "52.91.237.149",
+                    "port": 3000,
+                    "backendInstanceId": "i-0bdbd3e7e1a28b3d1",
+                    "frontendInstanceId": "i-0e3de897255172c11",
+                    "createdAt": "2024-07-29T06:28:09.000Z",
+                    "updatedAt": "2024-07-29T06:28:09.000Z"
+                }
+            ],
+            "projects": [
+                {
+                    "projectId": 11,
+                    "projectName": "Backend",
+                    "clientName": "DevOps Team",
+                    "managerName": "Kiran sir",
+                    "description": "node server",
+                    "createdAt": "2024-07-23T18:25:56.000Z",
+                    "updatedAt": "2024-07-23T18:25:56.000Z"
+                },
+                {
+                    "projectId": 12,
+                    "projectName": "codmey",
+                    "clientName": "askn",
+                    "managerName": "n skaj",
+                    "description": "trregger",
+                    "createdAt": "2024-07-26T14:07:02.000Z",
+                    "updatedAt": "2024-07-26T14:07:02.000Z"
+                },
+                {
+                    "projectId": 13,
+                    "projectName": "Druva",
+                    "clientName": "NASA",
+                    "managerName": "Dave",
+                    "description": "astronomy",
+                    "createdAt": "2024-07-28T17:26:10.000Z",
+                    "updatedAt": "2024-07-28T17:26:10.000Z"
+                },
+                {
+                    "projectId": 14,
+                    "projectName": "codmey5",
+                    "clientName": "askn",
+                    "managerName": "eggrre",
+                    "description": "trregger",
+                    "createdAt": "2024-07-29T04:33:26.000Z",
+                    "updatedAt": "2024-07-29T04:33:26.000Z"
+                },
+                {
+                    "projectId": 15,
+                    "projectName": "nsknc",
+                    "clientName": "dfb",
+                    "managerName": "knlksd",
+                    "description": "jnsan ",
+                    "createdAt": "2024-07-29T05:00:07.000Z",
+                    "updatedAt": "2024-07-29T05:00:07.000Z"
+                },
+                {
+                    "projectId": 16,
+                    "projectName": "project1",
+                    "clientName": "client",
+                    "managerName": "client2",
+                    "description": "project2",
+                    "createdAt": "2024-07-29T05:30:22.000Z",
+                    "updatedAt": "2024-07-29T05:30:22.000Z"
+                }
+            ]
+        }
+        }
 
         // Combine applications and projects data
         const combinedData = response.data.projects.map(project => {
@@ -26,7 +231,8 @@ function DeploymentsPage() {
             projectName: project.projectName,
             status: application ? application.status : false,
             publicIp: application ? application.ipAddress: null,
-            portNumber: application ? application.port : null
+            frontendInstanceId : application ? application.frontendInstanceId : null,
+            backendInstanceId : application ? application.backendInstanceId : null,
           };
         });
 
@@ -44,30 +250,63 @@ function DeploymentsPage() {
     console.log(projects);
   }, [projects]);
 
-  const handleTerminateInstance = async (projectId) => {
+  const handleTerminateInstance = async (frontendInstanceId,backendInstanceId) => {
     try {
-      // Simulated delay to mimic an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // console.log(projectId);
+      // console.log(frontendInstanceId,backendInstanceId);
+      const response = await axios.post(`${API_URL}/terminateInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
+
 
       // Mock response
-      const mockResponse = {
-        data: {
-          success: true, // Change to false to simulate a failed termination
-        }
-      };
-
-      const response = mockResponse;
-
-      if (response.data.success) {
+      // const response = mockResponse;
+      // const response = {
+      //   data: { success: true }
+      // }
+      if (response.data) {
+        // console.log(response.data);
         toast("Instance terminated successfully");
         // Remove the project from the table after successful termination
-        setProjects((prevProjects) => prevProjects.filter(project => project.projectId !== projectId));
+        setProjects((prevProjects) => prevProjects.filter(project => project.frontendInstanceId !== frontendInstanceId));
       } else {
         toast("Failed to terminate instance");
       }
     } catch (error) {
       toast("Error terminating instance");
+    }
+  };
+
+  const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
+    try {
+      const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
+      if (response.data) {
+        toast("Instance started successfully");
+        setProjects((prevProjects) => prevProjects.map(project =>
+          project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
+            ? { ...project, status: true }
+            : project
+        ));
+      } else {
+        toast("Failed to start instance");
+      }
+    } catch (error) {
+      toast("Error starting instance");
+    }
+  };
+
+  const handleStopInstance = async (frontendInstanceId, backendInstanceId) => {
+    try {
+      const response = await axios.get(`${API_URL}/stopInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
+      if (response.data) {
+        toast("Instance stopped successfully");
+        setProjects((prevProjects) => prevProjects.map(project =>
+          project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
+            ? { ...project, status: false }
+            : project
+        ));
+      } else {
+        toast("Failed to stop instance");
+      }
+    } catch (error) {
+      toast("Error stopping instance");
     }
   };
 
@@ -96,14 +335,13 @@ function DeploymentsPage() {
         Header: 'Access',
         accessor: 'access',
         Cell: ({ row }) => (
-          row.original.status ? (
-            <button
-              onClick={() => handleAccessLink(`http://${row.original.publicIp}`)}
-              className="bg-blue-500 text-white py-1 px-2 rounded-lg shadow hover:bg-blue-600 transition duration-300"
-            >
-              Link
-            </button>
-          ) : <span className='items-center justify-center py-1 px-5'>-</span>
+          <button
+            onClick={() => handleAccessLink(`http://${row.original.publicIp}`)}
+            className={`bg-blue-500 text-white py-1 px-2 rounded-lg shadow ${row.original.status ? 'hover:bg-blue-600' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={!row.original.status}
+          >
+            Link
+          </button>
         ),
         className: 'text-center',
       },
@@ -111,14 +349,39 @@ function DeploymentsPage() {
         Header: 'Terminate EC2 Instance',
         accessor: 'terminate',
         Cell: ({ row }) => (
-          row.original.status ? (
-            <button
-              onClick={() => handleTerminateInstance(row.original.projectId)}
-              className="bg-red-500 text-white py-1 px-2 rounded-lg shadow hover:bg-red-600 transition duration-300"
-            >
-              Terminate
-            </button>
-          ) : <span className='items-center justify-center py-1 px-5'>-</span>
+          <button
+            onClick={() => handleTerminateInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
+            className={`bg-red-500 text-white py-1 px-2 rounded-lg shadow ${row.original.status ? 'hover:bg-red-600' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={!row.original.status}
+          >
+            Terminate
+          </button>
+        ),
+        className: 'text-center',
+      },
+      {
+        Header: 'Manage EC2 Instance',
+        accessor: 'manage',
+        Cell: ({ row }) => (
+          <div className="flex justify-center gap-2">
+            {row.original.status ? (
+              <>
+                <button
+                  onClick={() => handleStopInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
+                  className="bg-yellow-500 text-white py-1 px-2 rounded-lg shadow hover:bg-yellow-600"
+                >
+                  Stop
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => handleStartInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
+                className="bg-green-500 text-white py-1 px-2 rounded-lg shadow hover:bg-green-600"
+              >
+                Start
+              </button>
+            )}
+          </div>
         ),
         className: 'text-center',
       },

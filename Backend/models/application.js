@@ -54,6 +54,10 @@ module.exports = (sequelize, DataTypes) => {
     frontendInstanceId: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    backendIp: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'Applications',

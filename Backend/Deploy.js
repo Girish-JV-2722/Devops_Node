@@ -170,7 +170,7 @@ async function pushDockerImage(imageName,dockerUsername,dockerPassword,projectNa
   console.log(`${imageName} Docker image pushed to Docker Hub successfully.`);
 }
 
-async function getOrCreateSecurityGroup(ec2) {
+async function getOrCreateSecurityGroup(ec2,portNumber) {
   // Check if security group exists
   const params = {
     Filters: [
@@ -201,7 +201,7 @@ async function getOrCreateSecurityGroup(ec2) {
             const result = await ec2.createSecurityGroup(createParams).promise();
             console.log('Created new security group:', result.GroupId);
             // Add inbound rules to the new security group
-            await addInboundRules(ec2,result.GroupId);
+            await addInboundRules(ec2,result.GroupId,portNumber);
             resolve(result.GroupId);
           } catch (createErr) {
             console.error('Error creating security group:', createErr);
@@ -214,14 +214,14 @@ async function getOrCreateSecurityGroup(ec2) {
 }
 
 
-async function addInboundRules(ec2,securityGroupId) {
+async function addInboundRules(ec2,securityGroupId,portNumber) {
   const params = {
     GroupId: securityGroupId,
     IpPermissions: [
       {
         IpProtocol: 'tcp',
-        FromPort: 3000,
-        ToPort: 3000,
+        FromPort: portNumber,
+        ToPort: portNumber,
         IpRanges: [{ CidrIp: '0.0.0.0/0' }],
       },
       {
@@ -247,7 +247,7 @@ async function addInboundRules(ec2,securityGroupId) {
 }
 
 //Backend Deploy to EC2
-async function deployToEC2(ec2,projectType,dockerUsername,projectName) {
+async function deployToEC2(ec2,projectType,dockerUsername,projectName,portNumber) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
@@ -258,9 +258,11 @@ async function deployToEC2(ec2,projectType,dockerUsername,projectName) {
     .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
     .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
     .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD)
-    .replace(/\${projectName}/g, projectName.toLowerCase());
+    .replace(/\${projectName}/g, projectName.toLowerCase())
+    .replace(/\${portNumber}/g, portNumber);
+
   
-  const securityGroupId = await getOrCreateSecurityGroup(ec2);
+  const securityGroupId = await getOrCreateSecurityGroup(ec2,portNumber);
 
   const params = {
     ImageId: 'ami-0427090fd1714168b',
@@ -382,6 +384,7 @@ async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
 async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName,frontendNodeVersion) {
   const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
   let publicIp;
+  let backendIp;
   try {
     console.log(projectName);
 
@@ -393,7 +396,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       await pushDockerImage('backend-image',dockerUsername,dockerPassword,projectName);
     
       await cloneRepo(frontendRepoUrl, targetDir_frontend);
-      const backendIp = await deployToEC2(ec2,'backend',dockerUsername,projectName);
+      backendIp = await deployToEC2(ec2,'backend',dockerUsername,projectName,portNumber);
       console.log('Deployment successful. backend IP Address:', backendIp);
 
       await updateOrCreateEnvFile(targetDir_frontend, backendIp);
@@ -402,7 +405,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
 
       console.log('Deployment successful. frontend IP Address:', publicIp);
-      const data={status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId};
+      const data={status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId,backendIp:backendIp};
       return data;
       
   } catch (error) {
@@ -410,7 +413,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
     return data={status:"failed",error};
   } finally {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    return data={ status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId };
+    return data={ status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId,backendIp:backendIp};
   }
 }
 

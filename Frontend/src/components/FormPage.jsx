@@ -38,8 +38,9 @@ export default function FormPage() {
   const [formData, setFormData] = useState({});
   const [isFetchingToken, setIsFetchingToken] = useState(false);
   const [rerender, setRerender] = useState(false);
-  const [token,setToken]=useState(localStorage.getItem("accessToken"));
-  const  { projectId } = useParams();
+  const [token, setToken] = useState(localStorage.getItem("accessToken"));
+  const { projectId } = useParams();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,24 +81,24 @@ export default function FormPage() {
 
           setFormData((prevFormData) => ({
             ...prevFormData,
-            gitToken:token,
+            gitToken: token,
           }));
           console.log("successfully obtained token");
           toast.success("Successfully obtained GitHub access token");
           setRerender(!rerender);
         } else {
-          
+
           toast.error("Failed to obtain GitHub access token");
           console.log("failed obtained token");
         }
       }
       getAccessToken();
     }
-    else{
+    else {
       console.log("Token already exists");
       setFormData((prevFormData) => ({
         ...prevFormData,
-        gitToken:token,
+        gitToken: token,
       }));
     }
     // getUserData();
@@ -109,9 +110,9 @@ export default function FormPage() {
       ...prevFormData,
       [name]: value,
     }));
-    
+
   };
-  
+
   const CLIENT_ID = "Ov23liBPsEnGO0AWvNx5";
 
   const handleGetGitHubToken = async () => {
@@ -120,12 +121,12 @@ export default function FormPage() {
     );
     // window.location.href="http://localhost:3000/auth/github/";
   };
-  
+
 
   const handleSubmit = async (event) => {
 
     // return;
-    
+
     event.preventDefault();
 
     console.log("Form Data:", formData);
@@ -135,44 +136,53 @@ export default function FormPage() {
       return;
     }
 
+    setLoading(true);
+
     try {
-      await fetch( `http://localhost:3000/configureApplication?projectId=${projectId}`, {
+      await fetch(`http://localhost:3000/configureApplication?projectId=${projectId}`, {
         method: "POST",
         headers: {
           "Authorization": "Bearer " + localStorage.getItem("accessToken"),
           'Content-Type': 'application/json',
-        }, 
-       body: JSON.stringify(formData),
+        },
+        body: JSON.stringify(formData),
       })
         .then((response) => {
           return response.json();
         })
         .then((data) => {
-          toast("Successfully sent data to server");
+          // toast("Successfully deployed project");
+          // console.log(data);
+          // navigate(`/deployments`);
           console.log(data);
-          navigate(`/deployments`);
+          setTimeout(() => {
+            toast("Successfully deployed your project");
+            setLoading(false);
+
+            setTimeout(() => {
+              navigate(`/deployments`);
+            }, 5000);
+          }, 120000);
+
         });
-    //   const response = await axios.post(
-    //     "http://localhost:3000/configureApplication",
-    //     {headers: {
-    //       "Authorization": "Bearer " + localStorage.getItem("accessToken"),
-    //     }
-    //   },
-    //     formData
-    //   );
-    //   if (response.data) {
-    //     toast("Successfully sent data to server");
-    //   } else {
-    //     toast("Failed to send data to server");
-    //   }
-    //   toast("Successfully deployed application");
+
     } catch (error) {
+      setLoading(false);
       toast("Oops! Something went wrong");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-200">
+    <div className="min-h-screen flex items-center justify-center bg-gray-200 relative">
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
+          <div className="flex flex-col items-center">
+            <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+            <div className="text-white text-xl font-semibold">Deployment in progress, please wait...</div>
+          </div>
+        </div>
+
+      )}
       <div className="bg-white p-8 my-8 rounded-lg shadow-lg w-full max-w-lg">
         <h1 className="text-2xl font-bold mb-4 text-center text-gray-900">
           Deploy App on AWS
@@ -192,9 +202,8 @@ export default function FormPage() {
             <button
               type="button"
               onClick={handleGetGitHubToken}
-              className={`bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 transition duration-300 ${
-                isFetchingToken ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700 transition duration-300 ${isFetchingToken ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               disabled={isFetchingToken}
             >
               Get Git Token
@@ -299,8 +308,8 @@ export default function FormPage() {
             Deploy
           </button>
         </form>
-        <ToastContainer />
       </div>
+      <ToastContainer />
     </div>
   );
 }

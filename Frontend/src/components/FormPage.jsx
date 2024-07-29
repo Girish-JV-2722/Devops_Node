@@ -178,14 +178,14 @@ export default function FormPage() {
           Deploy App on AWS
         </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4">
             <TextInput
               name="gitToken"
               value={token}
-              onChange={(e)=>{handleOnChange(e);
-              setToken(localStorage.getItem("accessToken"));
-              }
-              }
+              onChange={(e) => {
+                handleOnChange(e);
+                setToken(localStorage.getItem("accessToken"));
+              }}
               placeholder="GitHub Access Key"
               type="password"
             />
@@ -219,13 +219,6 @@ export default function FormPage() {
             options={awsRegions}
             placeholder="Select AWS Region"
           />
-          
-          {/* <TextInput
-            name="appName"
-            value={formData?.appName}
-            onChange={handleOnChange}
-            placeholder="Application Name"
-          /> */}
           <SelectInput
             name="environment"
             value={formData?.environment}
@@ -246,14 +239,14 @@ export default function FormPage() {
             placeholder="Docker Hub Password"
             type="password"
           />
-          <SelectInput
+          {/* <SelectInput
             name="technology"
             value={formData?.technology}
             onChange={handleOnChange}
             options={["React", "Node"]}
             placeholder="Select Technology"
-          />
-          {formData?.technology === "React" && (
+          /> */}
+          {/* {formData?.technology === "React" && (
             <>
               <TextInput
                 name="reactVersion"
@@ -262,12 +255,12 @@ export default function FormPage() {
                 placeholder="React Version"
               />
             </>
-          )}
+          )} */}
           <TextInput
-                name="portNumber"
-                value={formData.portNumber || ""}
-                onChange={handleOnChange}
-                placeholder="Port Number"
+            name="portNumber"
+            value={formData.portNumber || ""}
+            onChange={handleOnChange}
+            placeholder="Port Number"
           />
           <TextInput
             name="nodeVersion"
@@ -288,12 +281,17 @@ export default function FormPage() {
             placeholder="App Build Command"
           />
           <TextInput
-            name="gitUrl"
-            value={formData?.gitUrl}
+            name="frontendRepoUrl"
+            value={formData?.frontendRepoUrl}
             onChange={handleOnChange}
-            placeholder="GitHub Repository"
+            placeholder="Frontend GitHub Repository"
           />
-
+          <TextInput
+            name="backendRepoUrl"
+            value={formData?.backendRepoUrl}
+            onChange={handleOnChange}
+            placeholder="Backend GitHub Repository"
+          />
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition duration-300"

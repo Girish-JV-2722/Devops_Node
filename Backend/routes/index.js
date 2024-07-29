@@ -15,6 +15,18 @@ const connection = mysql.createConnection({
   database: process.env.DB_NAME,
 });
 
+
+const createEC2=async(AWS_Accesskey,AWS_Secretkey,region)=>{
+  
+  const ec2 = new AWS.EC2({
+    region:region,
+    accessKeyId:AWS_Accesskey,
+    secretAccessKey:AWS_Secretkey,
+  });
+  return ec2;
+}
+
+
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
   host: process.env.DB_HOST,
@@ -141,9 +153,12 @@ router.post("/configureApplication", async function (req, res) {
           environment,
           gitUrl,
           nodeVersion,
+          portNumber,
+          backendRepoUrl,
+          frontendRepoUrl,
         } = req.body;
         const {projectId} = req.query;
-        console.log("projectId: "+projectId);
+        console.log("projectId: "+ projectId);
         if (!projectId) {
           return res.status(400).json({ error: "Project ID is missing" });
         }
@@ -158,8 +173,11 @@ router.post("/configureApplication", async function (req, res) {
         // const gitUrl=application.gitUrl;
         // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
         // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
-        
-         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,gitUrl,dockerPassword,dockerUsername);
+        let project= await Project.findOne({ where: {projectId:projectId}});
+        let projectName=project.projectName;
+        console.log(projectName);
+         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName);
+         
          
          console.log(deploydata);
 
@@ -176,6 +194,8 @@ router.post("/configureApplication", async function (req, res) {
           status:deploydata.status,
           ipAddress:deploydata.publicIp,
           port:deploydata.port,
+          frontendInstanceId:deploydata.frontendInstanceId,
+          backendInstanceId:deploydata.backendInstanceId,
         });
     
         
@@ -222,5 +242,79 @@ router.get("/getAllApp", async function (req, res, next) {
     res.status(500).json({ error: error.message });
   }
   });
+
+  router.get(`/configure/:projectId/success`, async function (req, res, next) {
+    try {
+      const projectId = req.params.projectId;
+      let projects=await Project.findOne({projectId:projectId});
+      let applications=await Application.findOne({projectId:projectId});
+     
+      res.status(200).json({deploydata,applications,projects});
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+    });
+
+    router.get("/stopInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.stopInstances(params).promise();
+        res.status(200).json(data.StoppingInstances);
+       
+      } catch (err) {
+        res.status(200).json({"error":err});
+      }
+    })
+
+    router.get("/startInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.startInstances(params).promise();
+        // console.log("Success", );
+        res.status(200).json(data.StartingInstances);
+      } catch (err) {
+        res.status(200).json({"error":err});
+      }
+    })
+
+    router.get("/terminateInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+     
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.terminateInstances(params).promise();
+        res.status(200).json(data.TerminatingInstances);
+        
+      } catch (err) {
+        res.status(200).json({"error":err});
+      
+      }
+    })
+  
 
 module.exports = router;

@@ -140,7 +140,7 @@ function DeploymentsPage() {
       // }
         // Extract project IDs with associated applications
       const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
-
+      console.log(response.data);
       // Filter projects to include only those with associated applications
       const filteredProjects = response.data.projects.filter(project =>
         applicationProjectIds.has(project.projectId)

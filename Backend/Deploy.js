@@ -385,6 +385,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
   const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
   let publicIp;
   let backendIp;
+  let status;
   try {
     console.log(projectName);
 
@@ -405,15 +406,17 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
 
       console.log('Deployment successful. frontend IP Address:', publicIp);
-      const data={status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId,backendIp:backendIp};
+      status="deployed";
+      const data={status:status,publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId,backendIp:backendIp};
       return data;
       
   } catch (error) {
+     status="failed"
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    return data={status:"failed",error};
+    return data={status:status,error};
   } finally {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    return data={ status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId,backendIp:backendIp};
+    return data={ status:status,publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId,backendIp:backendIp};
   }
 }
 

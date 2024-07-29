@@ -171,8 +171,11 @@ router.post("/configureApplication", async function (req, res) {
       // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
       // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
       let project = await Project.findOne({ where: { projectId: projectId } });
+      
       let projectName = project.projectName;
       console.log(projectName);
+
+
       deploydata = await main(
         data.id,
         AWS_Accesskey,

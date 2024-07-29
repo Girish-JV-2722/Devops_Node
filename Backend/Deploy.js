@@ -258,7 +258,7 @@ async function deployToEC2(ec2,projectType,dockerUsername,projectName) {
     .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
     .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
     .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD)
-    .replace(/\${projectName}/g, projectName);
+    .replace(/\${projectName}/g, projectName.toLowerCase());
   
   const securityGroupId = await getOrCreateSecurityGroup(ec2);
 
@@ -299,7 +299,7 @@ async function deployFrontendToEC2(ec2,projectType,dockerUsername,backendIp,proj
     .replace(/\${DOCKER_USERNAME}/g,dockerUsername)
     .replace(/\${PROJECT_TYPE}/g, projectType)
     .replace(/\${BACKEND_IP}/g,backendIp)
-    .replace(/\${projectName}/g, projectName);
+    .replace(/\${projectName}/g, projectName.toLowerCase());
     
   
   const securityGroupId = await getOrCreateSecurityGroup(ec2);
@@ -402,15 +402,15 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
 
       console.log('Deployment successful. frontend IP Address:', publicIp);
-      const data={status:true,publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId};
+      const data={status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId};
       return data;
       
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    console.error('Deployment failed:', error);
+    return data={status:"failed",error};
   } finally {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
-    return data={ status:true,publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId };
+    return data={ status:"deployed",publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId };
   }
 }
 

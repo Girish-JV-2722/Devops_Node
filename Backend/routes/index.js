@@ -26,6 +26,21 @@ const createEC2=async(AWS_Accesskey,AWS_Secretkey,region)=>{
   return ec2;
 }
 
+async function getInstanceIpAddress(ec2,instanceId) {
+  const params = {
+    InstanceIds: [instanceId]
+  };
+
+  try {
+    const data = await ec2.describeInstances(params).promise();
+    const instance = data.Reservations[0].Instances[0];
+    const ipAddress = instance.PublicIpAddress || instance.PrivateIpAddress;
+    return ipAddress;
+  } catch (error) {
+    console.error('Error getting instance IP address:', error);
+    throw error;
+  }
+}
 
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
@@ -210,7 +225,7 @@ router.post("/configureApplication", async function (req, res) {
           const newDeployment = await Deployment.create({
             userId:user.id,
             applicationId:newApplication.applicationId,
-            status:deploydata.status,
+            status:1,
             log:"Something",
             environment,
             createdAt: new Date(),
@@ -263,11 +278,13 @@ router.get("/getAllApp", async function (req, res, next) {
 
       const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
       const params = {
-        InstanceIds: [frontendInstanceId,backendInstanceId]
+        InstanceIds: [frontendInstanceId]
       };
     
       try {
         const data = await ec2.stopInstances(params).promise();
+        application.status="stopped";
+        await application.save();
         res.status(200).json(data.StoppingInstances);
        
       } catch (err) {
@@ -277,8 +294,8 @@ router.get("/getAllApp", async function (req, res, next) {
 
     router.get("/startInstance",async function(req,res){
       const {frontendInstanceId,backendInstanceId}=req.query;
-      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
-      let user = await User.findOne({id:application.userId});
+      let application=await Application.findOne({where:{frontendInstanceId:frontendInstanceId}});
+      let user = await User.findOne({where:{id:application.userId}});
 
       const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
 
@@ -288,11 +305,22 @@ router.get("/getAllApp", async function (req, res, next) {
     
       try {
         const data = await ec2.startInstances(params).promise();
-        // console.log("Success", );
+        
+        const ipAddress=await getInstanceIpAddress(ec2,frontendInstanceId);
+        await Application.update({ ipAddress:ipAddress,
+          status:"deployed",}, {
+          where: {
+           applicationId: application.applicationId
+          }
+        });
+    
         res.status(200).json(data.StartingInstances);
       } catch (err) {
         res.status(200).json({"error":err});
       }
+
+      
+
     })
 
     router.get("/terminateInstance",async function(req,res){
@@ -309,6 +337,21 @@ router.get("/getAllApp", async function (req, res, next) {
     
       try {
         const data = await ec2.terminateInstances(params).promise();
+        try {
+          const result = await Application.destroy({
+            where: {
+              applicationId: application.applicationId
+            }
+          });
+      
+          if (result === 0) {
+            console.log('No application found with the given ID.');
+          } else {
+            console.log('Application deleted successfully.');
+          }
+        } catch (error) {
+          console.error('Error deleting application:', error);
+        }
         res.status(200).json(data.TerminatingInstances);
         
       } catch (err) {

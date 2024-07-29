@@ -153,7 +153,7 @@ export default function FormPage() {
         .then((data) => {
           toast("Successfully sent data to server");
           console.log(data);
-          navigate(`/configure/${projectId}/success`);
+          navigate(`/deployments`);
         });
     //   const response = await axios.post(
     //     "http://localhost:3000/configureApplication",

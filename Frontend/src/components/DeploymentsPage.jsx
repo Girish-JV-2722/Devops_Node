@@ -18,129 +18,7 @@ function DeploymentsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // const response = await axios.get(`${API_URL}/getAllApp`);
-           const response = {
-              data : {
-                "deploydata": {
-                    "status": true,
-                    "publicIp": "52.91.237.149",
-                    "port": "3000",
-                    "frontendInstanceId": "i-0e3de897255172c11",
-                    "backendInstanceId": "i-0bdbd3e7e1a28b3d1"
-                },
-                "applications": [
-                  {
-                    "applicationId": 126,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 13,
-                    "status": "deployed",
-                    "ipAddress": null,
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-28T19:15:26.000Z",
-                    "updatedAt": "2024-07-28T19:15:26.000Z"
-                },
-                {
-                    "applicationId": 128,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 15,
-                    "status": "stopped",
-                    "ipAddress": "34.230.51.28",
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-29T05:04:03.000Z",
-                    "updatedAt": "2024-07-29T05:04:03.000Z"
-                },
-                {
-                    "applicationId": 131,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 16,
-                    "status": "deployed",
-                    "ipAddress": "52.91.237.149",
-                    "port": 3000,
-                    "backendInstanceId": "i-0bdbd3e7e1a28b3d1",
-                    "frontendInstanceId": "i-0e3de897255172c11",
-                    "createdAt": "2024-07-29T06:28:09.000Z",
-                    "updatedAt": "2024-07-29T06:28:09.000Z"
-                }
-              ],
-                "projects": [
-                    {
-                        "projectId": 11,
-                        "projectName": "Backend",
-                        "clientName": "DevOps Team",
-                        "managerName": "Kiran sir",
-                        "description": "node server",
-                        "createdAt": "2024-07-23T18:25:56.000Z",
-                        "updatedAt": "2024-07-23T18:25:56.000Z"
-                    },
-                    {
-                        "projectId": 12,
-                        "projectName": "codmey",
-                        "clientName": "askn",
-                        "managerName": "n skaj",
-                        "description": "trregger",
-                        "createdAt": "2024-07-26T14:07:02.000Z",
-                        "updatedAt": "2024-07-26T14:07:02.000Z"
-                    },
-                    {
-                        "projectId": 13,
-                        "projectName": "Druva",
-                        "clientName": "NASA",
-                        "managerName": "Dave",
-                        "description": "astronomy",
-                        "createdAt": "2024-07-28T17:26:10.000Z",
-                        "updatedAt": "2024-07-28T17:26:10.000Z"
-                    },
-                    {
-                        "projectId": 14,
-                        "projectName": "codmey5",
-                        "clientName": "askn",
-                        "managerName": "eggrre",
-                        "description": "trregger",
-                        "createdAt": "2024-07-29T04:33:26.000Z",
-                        "updatedAt": "2024-07-29T04:33:26.000Z"
-                    },
-                    {
-                        "projectId": 15,
-                        "projectName": "nsknc",
-                        "clientName": "dfb",
-                        "managerName": "knlksd",
-                        "description": "jnsan ",
-                        "createdAt": "2024-07-29T05:00:07.000Z",
-                        "updatedAt": "2024-07-29T05:00:07.000Z"
-                    },
-                    {
-                        "projectId": 16,
-                        "projectName": "project1",
-                        "clientName": "client",
-                        "managerName": "client2",
-                        "description": "project2",
-                        "createdAt": "2024-07-29T05:30:22.000Z",
-                        "updatedAt": "2024-07-29T05:30:22.000Z"
-                    }
-                ]
-            }
-          }
-    
-
+        const response = await axios.get(`${API_URL}/getAllApp`);
 
         // Extract project IDs with associated applications
       const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
@@ -368,7 +246,6 @@ function DeploymentsPage() {
             <div className="text-white text-xl font-semibold">The EC2 instance is starting up. This may take a moment, please be patient.</div>
           </div>
         </div>
-
       )}
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">

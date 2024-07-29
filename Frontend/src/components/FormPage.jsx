@@ -151,9 +151,7 @@ export default function FormPage() {
           return response.json();
         })
         .then((data) => {
-          // toast("Successfully deployed project");
-          // console.log(data);
-          // navigate(`/deployments`);
+
           console.log(data);
           setTimeout(() => {
             toast("Successfully deployed your project");

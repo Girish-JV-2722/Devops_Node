@@ -156,6 +156,7 @@ router.post("/configureApplication", async function (req, res) {
           portNumber,
           backendRepoUrl,
           frontendRepoUrl,
+          frontendNodeVersion
         } = req.body;
         const {projectId} = req.query;
         console.log("projectId: "+ projectId);
@@ -176,7 +177,7 @@ router.post("/configureApplication", async function (req, res) {
         let project= await Project.findOne({ where: {projectId:projectId}});
         let projectName=project.projectName;
         console.log(projectName);
-         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName);
+         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName,frontendNodeVersion);
          
          
          console.log(deploydata);
@@ -257,7 +258,7 @@ router.get("/getAllApp", async function (req, res, next) {
 
     router.get("/stopInstance",async function(req,res){
       const {frontendInstanceId,backendInstanceId}=req.query;
-      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let application=await Application.findOne({where:{frontendInstanceId:frontendInstanceId}});
       let user = await User.findOne({id:application.userId});
 
       const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
@@ -311,10 +312,60 @@ router.get("/getAllApp", async function (req, res, next) {
         res.status(200).json(data.TerminatingInstances);
         
       } catch (err) {
-        res.status(200).json({"error":err});
+        res.status(500).json({"error":err});
       
       }
     })
+
+  
+  router.get("/instanceStatus",async function(req,res){
+
+    const {frontendInstanceId}=req.query;
+
+    let application=await Application.findOne({where:{frontendInstanceId:frontendInstanceId}});
+    let user = await User.findOne({where:{id:application.userId}});
+
+    const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+
+    
+        try {
+          const params = {
+            InstanceIds: [frontendInstanceId]
+          };
+      
+          // Describe instance status
+          const data = await ec2.describeInstanceStatus(params).promise();
+      
+          if (data.InstanceStatuses.length === 0) {
+            console.log(`Instance ${frontendInstanceId} does not exist or is not in a running or stopped state.`);
+            return;
+          }
+      
+          // Extract instance status information
+          const instanceStatus = data.InstanceStatuses[0];
+          const systemStatus = instanceStatus.SystemStatus.Status;
+          const instanceState = instanceStatus.InstanceState.Name;
+      
+          console.log(`Instance ${frontendInstanceId} Status:`);
+          console.log(`- System Status: ${systemStatus}`);
+          console.log(`- Instance State: ${instanceState}`);
+
+          
+          if (instanceState === 'running') {
+            const instanceHealth = instanceStatus.InstanceStatus.Status;
+            console.log(`- Instance Health: ${instanceHealth}`);
+            res.status(200).json({instanceHealth:instanceHealth,instanceState:instanceState});
+          }else{
+            res.status(200).json({"data":instanceState});
+          }
+        } catch (error) {
+          console.error('Error describing instance status:', error);
+          res.status(500).json({"error":error});
+        }
+      }
+      
+    
+  )
   
 
 module.exports = router;

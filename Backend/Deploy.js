@@ -140,14 +140,14 @@ async function buildDockerImageBackend(dockerUsername,portNumber,nodeVersion,bac
       throw new Error('DOCKER_USERNAME environment variable is not set.');
     }
     await runCommand(`docker rmi -f ${dockerUsername}/${projectName.toLowerCase()}-backend-image:latest || true`);
-    await runCommand(`docker build -t ${dockerUsername}/${projectName.toLowerCase()}-backend-image:latest -f ./Backend-DockerFile/Dockerfile .`);
+    await runCommand(`docker build --build-arg NODE_VERSION=${nodeversion} --build-arg APP_PORT=${appPort} -t ${dockerUsername}/${projectName.toLowerCase()}-backend-image:latest -f ./Backend-DockerFile/Dockerfile .`);
     console.log('Backend Docker image built successfully.');
   } catch (error) {
     console.error(`Failed to build Docker image: ${error}`);
   }
 }
 
-async function buildDockerImageFrontend(dockerUsername,projectName){
+async function buildDockerImageFrontend(dockerUsername,projectName,frontendNodeVersion){
   try {
     console.log('Building Docker image for frontend...');
  
@@ -155,7 +155,7 @@ async function buildDockerImageFrontend(dockerUsername,projectName){
       throw new Error('projectName environment variable is not set.');
     }
     await runCommand(`docker rmi -f ${dockerUsername}/${projectName.toLowerCase()}-frontend-image:latest || true`);
-    await runCommand(`docker build -t ${dockerUsername}/${projectName.toLowerCase()}-frontend-image:latest -f ./frontend-Dockerfile/Dockerfile .`);
+    await runCommand(`docker build --build-arg NODE_VERSION=${frontendNodeVersion}  -t ${dockerUsername}/${projectName.toLowerCase()}-frontend-image:latest -f ./frontend-Dockerfile/Dockerfile .`);
     console.log('Frontend Docker image built successfully.');
   } catch (error) {
     console.error(`Failed to build Docker image: ${error}`);
@@ -379,7 +379,7 @@ async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
 }
 
 // Main function to run all tasks
-async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName) {
+async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName,frontendNodeVersion) {
   const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
   let publicIp;
   try {
@@ -397,7 +397,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       console.log('Deployment successful. backend IP Address:', backendIp);
 
       await updateOrCreateEnvFile(targetDir_frontend, backendIp);
-      await buildDockerImageFrontend(dockerUsername,projectName);
+      await buildDockerImageFrontend(dockerUsername,projectName,frontendNodeVersion);
       await pushDockerImage('frontend-image',dockerUsername,dockerPassword,projectName);
       publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
 

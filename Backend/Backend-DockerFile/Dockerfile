@@ -1,5 +1,6 @@
+ARG NODE_VERSION
 # Use an official Node.js runtime as a parent image
-FROM node:14
+FROM node:${NODE_VERSION}
 
 # Set the working directory in the container
 WORKDIR /app
@@ -10,8 +11,9 @@ COPY ./cloned-repo-backend/. .
 # Install any needed dependencies
 RUN npm install
 
-# Make port 8080 available to the world outside this container
-EXPOSE 3000
+# Make the application port available to the world outside this container
+ARG APP_PORT
+EXPOSE ${APP_PORT}
 
 # Define the command to run your app
 CMD ["npm", "start"]

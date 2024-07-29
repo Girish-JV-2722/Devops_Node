@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTable } from 'react-table';
 import axios from 'axios';
-import {API_URL}from '../constants/api.js'
+import { API_URL } from '../constants/api.js';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -16,7 +16,6 @@ function DeploymentsPage() {
     const fetchProjects = async () => {
       try {
         // const response = await axios.get(`${API_URL}/getAllApp`);
-        // console.log(response.data);
         const response = {
           data : {
             "deploydata": {
@@ -27,143 +26,58 @@ function DeploymentsPage() {
                 "backendInstanceId": "i-0bdbd3e7e1a28b3d1"
             },
             "applications": [
-                {
-                    "applicationId": 5,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": null,
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": null,
-                    "projectId": 12,
-                    "status": false,
-                    "ipAddress": null,
-                    "port": null,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": "i-056a21b707a3372a2",
-                    "createdAt": "2024-07-27T12:34:56.000Z",
-                    "updatedAt": "2024-07-27T12:34:56.000Z"
-                },
-                {
-                    "applicationId": 123,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 13,
-                    "status": true,
-                    "ipAddress": null,
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-28T18:05:17.000Z",
-                    "updatedAt": "2024-07-28T18:05:17.000Z"
-                },
-                {
-                    "applicationId": 124,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 13,
-                    "status": true,
-                    "ipAddress": "18.234.120.32",
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-28T18:54:57.000Z",
-                    "updatedAt": "2024-07-28T18:54:57.000Z"
-                },
-                {
-                    "applicationId": 125,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 13,
-                    "status": true,
-                    "ipAddress": "98.80.227.17",
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-28T19:05:49.000Z",
-                    "updatedAt": "2024-07-28T19:05:49.000Z"
-                },
-                {
-                    "applicationId": 126,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 13,
-                    "status": true,
-                    "ipAddress": null,
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-28T19:15:26.000Z",
-                    "updatedAt": "2024-07-28T19:15:26.000Z"
-                },
-                {
-                    "applicationId": 127,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 14,
-                    "status": true,
-                    "ipAddress": "18.234.73.206",
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-29T04:37:42.000Z",
-                    "updatedAt": "2024-07-29T04:37:42.000Z"
-                },
-                {
-                    "applicationId": 128,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 15,
-                    "status": true,
-                    "ipAddress": "34.230.51.28",
-                    "port": 3000,
-                    "backendInstanceId": null,
-                    "frontendInstanceId": null,
-                    "createdAt": "2024-07-29T05:04:03.000Z",
-                    "updatedAt": "2024-07-29T05:04:03.000Z"
-                },
-                {
-                    "applicationId": 131,
-                    "userId": 90469953,
-                    "region": "us-east-1",
-                    "environment": "EC2",
-                    "gitUrl": null,
-                    "scripts": null,
-                    "nodeVersion": "14",
-                    "projectId": 16,
-                    "status": true,
-                    "ipAddress": "52.91.237.149",
-                    "port": 3000,
-                    "backendInstanceId": "i-0bdbd3e7e1a28b3d1",
-                    "frontendInstanceId": "i-0e3de897255172c11",
-                    "createdAt": "2024-07-29T06:28:09.000Z",
-                    "updatedAt": "2024-07-29T06:28:09.000Z"
-                }
-            ],
+              {
+                "applicationId": 126,
+                "userId": 90469953,
+                "region": "us-east-1",
+                "environment": "EC2",
+                "gitUrl": null,
+                "scripts": null,
+                "nodeVersion": "14",
+                "projectId": 13,
+                "status": "deployed",
+                "ipAddress": null,
+                "port": 3000,
+                "backendInstanceId": null,
+                "frontendInstanceId": null,
+                "createdAt": "2024-07-28T19:15:26.000Z",
+                "updatedAt": "2024-07-28T19:15:26.000Z"
+            },
+            {
+                "applicationId": 128,
+                "userId": 90469953,
+                "region": "us-east-1",
+                "environment": "EC2",
+                "gitUrl": null,
+                "scripts": null,
+                "nodeVersion": "14",
+                "projectId": 15,
+                "status": "stopped",
+                "ipAddress": "34.230.51.28",
+                "port": 3000,
+                "backendInstanceId": null,
+                "frontendInstanceId": null,
+                "createdAt": "2024-07-29T05:04:03.000Z",
+                "updatedAt": "2024-07-29T05:04:03.000Z"
+            },
+            {
+                "applicationId": 131,
+                "userId": 90469953,
+                "region": "us-east-1",
+                "environment": "EC2",
+                "gitUrl": null,
+                "scripts": null,
+                "nodeVersion": "14",
+                "projectId": 16,
+                "status": "deployed",
+                "ipAddress": "52.91.237.149",
+                "port": 3000,
+                "backendInstanceId": "i-0bdbd3e7e1a28b3d1",
+                "frontendInstanceId": "i-0e3de897255172c11",
+                "createdAt": "2024-07-29T06:28:09.000Z",
+                "updatedAt": "2024-07-29T06:28:09.000Z"
+            }
+          ],
             "projects": [
                 {
                     "projectId": 11,
@@ -221,21 +135,27 @@ function DeploymentsPage() {
                 }
             ]
         }
-        }
+      }
+        // Extract project IDs with associated applications
+      const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
 
-        // Combine applications and projects data
-        const combinedData = response.data.projects.map(project => {
-          const application = response.data.applications.find(app => app.projectId === project.projectId);
-          return {
-            projectId: project.projectId,
-            projectName: project.projectName,
-            status: application ? application.status : false,
-            publicIp: application ? application.ipAddress: null,
-            frontendInstanceId : application ? application.frontendInstanceId : null,
-            backendInstanceId : application ? application.backendInstanceId : null,
-          };
-        });
+      // Filter projects to include only those with associated applications
+      const filteredProjects = response.data.projects.filter(project =>
+        applicationProjectIds.has(project.projectId)
+      );
 
+      // Combine filtered projects with their associated applications data
+      const combinedData = filteredProjects.map(project => {
+        const app = response.data.applications.find(app => app.projectId === project.projectId);
+        return {
+          projectId: project.projectId,
+          projectName: project.projectName,
+          status: app ? app.status : "failed",
+          publicIp: app ? app.ipAddress : null,
+          frontendInstanceId: app ? app.frontendInstanceId : null,
+          backendInstanceId: app ? app.backendInstanceId : null,
+        };
+      });
         setProjects(combinedData);
         setLoading(false);
       } catch (err) {
@@ -243,29 +163,16 @@ function DeploymentsPage() {
         setLoading(false);
       }
     };
+
     fetchProjects();
   }, []);
 
-  useEffect(() => {
-    console.log(projects);
-  }, [projects]);
-
-  const handleTerminateInstance = async (frontendInstanceId,backendInstanceId) => {
+  const handleTerminateInstance = async (frontendInstanceId, backendInstanceId) => {
     try {
-      // console.log(frontendInstanceId,backendInstanceId);
-      const response = await axios.post(`${API_URL}/terminateInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
-
-
-      // Mock response
-      // const response = mockResponse;
-      // const response = {
-      //   data: { success: true }
-      // }
-      if (response.data) {
-        // console.log(response.data);
+      const response = await axios.post(`${API_URL}/terminateInstance`, { frontendInstanceId, backendInstanceId });
+      if (response.data.success) {
         toast("Instance terminated successfully");
-        // Remove the project from the table after successful termination
-        setProjects((prevProjects) => prevProjects.filter(project => project.frontendInstanceId !== frontendInstanceId));
+        setProjects(prevProjects => prevProjects.filter(project => project.frontendInstanceId !== frontendInstanceId));
       } else {
         toast("Failed to terminate instance");
       }
@@ -276,12 +183,12 @@ function DeploymentsPage() {
 
   const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
     try {
-      const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
-      if (response.data) {
+      const response = await axios.post(`${API_URL}/startInstance`, { frontendInstanceId, backendInstanceId });
+      if (response.data.success) {
         toast("Instance started successfully");
-        setProjects((prevProjects) => prevProjects.map(project =>
+        setProjects(prevProjects => prevProjects.map(project =>
           project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
-            ? { ...project, status: true }
+            ? { ...project, status: "deployed" }
             : project
         ));
       } else {
@@ -294,12 +201,12 @@ function DeploymentsPage() {
 
   const handleStopInstance = async (frontendInstanceId, backendInstanceId) => {
     try {
-      const response = await axios.get(`${API_URL}/stopInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
-      if (response.data) {
+      const response = await axios.post(`${API_URL}/stopInstance`, { frontendInstanceId, backendInstanceId });
+      if (response.data.success) {
         toast("Instance stopped successfully");
-        setProjects((prevProjects) => prevProjects.map(project =>
+        setProjects(prevProjects => prevProjects.map(project =>
           project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
-            ? { ...project, status: false }
+            ? { ...project, status: "stopped" }
             : project
         ));
       } else {
@@ -324,21 +231,31 @@ function DeploymentsPage() {
       {
         Header: 'Status',
         accessor: 'status',
-        Cell: ({ value }) => (
-          <span className={`flex items-center justify-center w-36 text-white h-8 py-1 px-2 rounded-lg ${value ? 'bg-green-600' : 'bg-red-600'}`}>
-            {value ? 'successfully deployed' : 'failed to deploy'}
-          </span>
-        ),
+        Cell: ({ value }) => {
+          const statusColors = {
+            deployed: 'bg-green-600',
+            stopped: 'bg-yellow-600',
+            failed: 'bg-red-600',
+          };
+      
+          const bgColor = statusColors[value];
+      
+          return (
+            <span className={`flex items-center justify-center w-36 text-white h-8 py-1 px-2 rounded-lg ${bgColor}`}>
+              {value}
+            </span>
+          );
+        },
         className: 'text-center',
-      },
+      },      
       {
         Header: 'Access',
         accessor: 'access',
         Cell: ({ row }) => (
           <button
             onClick={() => handleAccessLink(`http://${row.original.publicIp}`)}
-            className={`bg-blue-500 text-white py-1 px-2 rounded-lg shadow ${row.original.status ? 'hover:bg-blue-600' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!row.original.status}
+            className={`bg-blue-500 text-white py-1 px-2 rounded-lg shadow ${row.original.status === 'deployed' ? 'hover:bg-blue-600' : 'opacity-50 cursor-not-allowed'}`}
+            disabled={row.original.status !== 'deployed'}
           >
             Link
           </button>
@@ -346,61 +263,58 @@ function DeploymentsPage() {
         className: 'text-center',
       },
       {
-        Header: 'Terminate EC2 Instance',
-        accessor: 'terminate',
-        Cell: ({ row }) => (
-          <button
-            onClick={() => handleTerminateInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
-            className={`bg-red-500 text-white py-1 px-2 rounded-lg shadow ${row.original.status ? 'hover:bg-red-600' : 'opacity-50 cursor-not-allowed'}`}
-            disabled={!row.original.status}
-          >
-            Terminate
-          </button>
-        ),
-        className: 'text-center',
-      },
-      {
         Header: 'Manage EC2 Instance',
         accessor: 'manage',
-        Cell: ({ row }) => (
-          <div className="flex justify-center gap-2">
-            {row.original.status ? (
-              <>
+        Cell: ({ row }) => {
+          const { status, frontendInstanceId, backendInstanceId } = row.original;
+
+          return (
+            <div className="flex justify-center gap-2">
+              {status === 'deployed' && (
+                <>
+                  <button
+                    onClick={() => handleStopInstance(frontendInstanceId, backendInstanceId)}
+                    className="bg-yellow-500 text-white py-1 px-2 rounded-lg shadow hover:bg-yellow-600"
+                  >
+                    Stop
+                  </button>
+                  <button
+                    onClick={() => handleTerminateInstance(frontendInstanceId, backendInstanceId)}
+                    className="bg-red-500 text-white py-1 px-2 rounded-lg shadow hover:bg-red-600"
+                  >
+                    Terminate
+                  </button>
+                </>
+              )}
+              {status === 'stopped' && (
                 <button
-                  onClick={() => handleStopInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
-                  className="bg-yellow-500 text-white py-1 px-2 rounded-lg shadow hover:bg-yellow-600"
+                  onClick={() => handleStartInstance(frontendInstanceId, backendInstanceId)}
+                  className="bg-green-500 text-white py-1 px-2 rounded-lg shadow hover:bg-green-600"
                 >
-                  Stop
+                  Start
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => handleStartInstance(row.original.frontendInstanceId, row.original.backendInstanceId)}
-                className="bg-green-500 text-white py-1 px-2 rounded-lg shadow hover:bg-green-600"
-              >
-                Start
-              </button>
-            )}
-          </div>
-        ),
+              )}
+              {status === 'failed' && (
+                <button
+                  onClick={() => handleStartInstance(frontendInstanceId, backendInstanceId)}
+                  className="bg-green-500 text-white py-1 px-2 rounded-lg shadow hover:bg-green-600"
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          );
+        },
         className: 'text-center',
-      },
+      }
     ],
     []
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({
-    columns,
-    data: projects,
-  });
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data: projects });
 
-  if (loading) {
-    return <div className="min-h-screen flex justify-center items-center bg-gray-200">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="min-h-screen flex justify-center items-center bg-gray-200">{error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-200 py-8">

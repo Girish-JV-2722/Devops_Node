@@ -276,7 +276,7 @@ router.get("/stopInstance", async function (req, res) {
     application.region
   );
   const params = {
-    InstanceIds: [frontendInstanceId],
+    InstanceIds: [frontendInstanceId, backendInstanceId],
   };
 
   try {
@@ -318,12 +318,68 @@ router.get("/startInstance", async function (req, res) {
         },
       }
     );
-
+    await deployDockerImages(frontendIpAddress, backendIpAddress, dockerUsername, projectName);
     res.status(200).json(data.StartingInstances);
   } catch (err) {
     res.status(200).json({ error: err });
   }
 });
+
+const fs = require('fs');
+const { Client } = require('ssh2');
+
+async function deployDockerImages(frontendIp, backendIp, dockerUsername, projectName) {
+  const ssh = new Client();
+
+  const restartContainers = (ip, containerNames) => {
+    return new Promise((resolve, reject) => {
+      const conn = new ssh();
+      conn.on('ready', () => {
+        conn.exec(
+          containerNames.map(name => `
+            docker stop ${name} || true
+            docker rm ${name} || true
+            docker run -d --name ${name} ${name}
+          `).join(' && '),
+          (err, stream) => {
+            if (err) return reject(err);
+            stream.on('close', () => {
+              conn.end();
+              resolve();
+            }).on('data', (data) => {
+              console.log('OUTPUT: ' + data);
+            }).stderr.on('data', (data) => {
+              console.log('STDERR: ' + data);
+            });
+          }
+        );
+      }).connect({
+        host: ip,
+        port: 22,
+        username: 'ec2-user', // or other appropriate username
+        privateKey: fs.readFileSync('C:/Users/jvgir/Documents/devops/Devops_Node/Backend/my-new-key-pair.pem')
+      });
+    });
+  };
+
+  const frontendImage = `${dockerUsername}/${projectName}-frontend-image:latest`;
+  const backendImage = `${dockerUsername}/${projectName}-backend-image:latest`;
+  const mysqlImage = 'mysql:5.7'; // Update this if you have specific names for MySQL containers
+
+  try {
+    // Restart frontend container
+    await restartContainers(frontendIp, [frontendImage]);
+
+    // Restart backend and MySQL containers
+    await restartContainers(backendIp, [backendImage, mysqlImage]);
+
+    console.log('Docker containers redeployed successfully.');
+  } catch (err) {
+    console.error('Error redeploying Docker containers:', err.message);
+  }
+}
+
+
 
 router.get("/terminateInstance", async function (req, res) {
   const { frontendInstanceId, backendInstanceId } = req.query;

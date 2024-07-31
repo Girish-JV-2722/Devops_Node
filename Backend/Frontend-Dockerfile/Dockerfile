@@ -1,6 +1,6 @@
-# Use the official Node.js image as the base image
-
-FROM node:18
+ARG NODE_VERSION
+# Use an official Node.js runtime as a parent image
+FROM node:${NODE_VERSION}
 
 # Create and change to the frontend app directory
 WORKDIR /usr/src/app

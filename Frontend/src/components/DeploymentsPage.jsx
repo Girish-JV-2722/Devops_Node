@@ -5,7 +5,7 @@ import axios from 'axios';
 import { API_URL } from '../constants/api.js';
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
- 
+
 function DeploymentsPage() {
   const navigate = useNavigate();
   const [rerender, setRerender] = useState(false);
@@ -13,33 +13,33 @@ function DeploymentsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingAfterStart, setLoadingAfterStart] = useState(false);
   const [error, setError] = useState(null);
- 
- 
+
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await axios.get(`${API_URL}/getAllApp`);
 
         // Extract project IDs with associated applications
-      const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
- 
-      // Filter projects to include only those with associated applications
-      const filteredProjects = response.data.projects.filter(project =>
-        applicationProjectIds.has(project.projectId)
-      );
- 
-      // Combine filtered projects with their associated applications data
-      const combinedData = filteredProjects.map(project => {
-        const app = response.data.applications.find(app => app.projectId === project.projectId);
-        return {
-          projectId: project.projectId,
-          projectName: project.projectName,
-          status: app ? app.status : "failed",
-          publicIp: app ? app.ipAddress : null,
-          frontendInstanceId: app ? app.frontendInstanceId : null,
-          backendInstanceId: app ? app.backendInstanceId : null,
-        };
-      });
+        const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
+        console.log(response.data);
+
+        // Filter projects to include only those with associated applications
+        const filteredProjects = response.data.projects.filter(project =>
+          applicationProjectIds.has(project.projectId)
+        );
+
+        // Combine filtered projects with their associated applications data
+        const combinedData = filteredProjects.map(project => {
+          const app = response.data.applications.find(app => app.projectId === project.projectId);
+          return {
+            projectId: project.projectId,
+            projectName: project.projectName,
+            status: app ? app.status : "failed",
+            publicIp: app ? app.ipAddress : null,
+            frontendInstanceId: app ? app.frontendInstanceId : null,
+            backendInstanceId: app ? app.backendInstanceId : null,
+          };
+        });
         setProjects(combinedData);
         setLoading(false);
       } catch (err) {
@@ -47,10 +47,10 @@ function DeploymentsPage() {
         setLoading(false);
       }
     };
- 
+
     fetchProjects();
   }, []);
- 
+
   const handleTerminateInstance = async (frontendInstanceId, backendInstanceId) => {
     try {
       const response = await axios.get(`${API_URL}/terminateInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
@@ -65,41 +65,35 @@ function DeploymentsPage() {
       toast("Error terminating instance");
     }
   };
- 
+
   const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
     setLoadingAfterStart(true);
     try {
       // const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
       const data = 1;
       if (data) {
-          console.log(data);
-          setTimeout(() => {
-            toast("Instance started successfully");
-            
-            setLoadingAfterStart(false);
-            setProjects(prevProjects => prevProjects.map(project =>
-              project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
-                ? { ...project, status: "deployed" }
-                : project
-            ));
-            setRerender(!rerender);   
-          }, 180000); //3mins
+        console.log(data);
+        setTimeout(() => {
+          toast("Instance started successfully");
 
-       
+          setLoadingAfterStart(false);
+          setProjects(prevProjects => prevProjects.map(project =>
+            project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
+              ? { ...project, status: "deployed" }
+              : project
+          ));
+          setRerender(!rerender);
+        }, 180000); // 3 mins
       } else {
         setLoadingAfterStart(false);
         toast("Failed to start instance");
       }
-
-
-
     } catch (err) {
       setLoadingAfterStart(false);
-      // console.log(error);
       toast("Error starting instance");
     }
   };
- 
+
   const handleStopInstance = async (frontendInstanceId, backendInstanceId) => {
     try {
       const response = await axios.get(`${API_URL}/stopInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
@@ -118,11 +112,11 @@ function DeploymentsPage() {
       toast("Error stopping instance");
     }
   };
- 
+
   const handleAccessLink = (url) => {
     window.open(url, '_blank');
   };
- 
+
   const columns = React.useMemo(
     () => [
       {
@@ -139,9 +133,9 @@ function DeploymentsPage() {
             stopped: 'bg-yellow-600',
             failed: 'bg-red-600',
           };
-     
+
           const bgColor = statusColors[value];
-     
+
           return (
             <span className={`flex items-center justify-center w-36 text-white h-8 py-1 px-2 rounded-lg ${bgColor}`}>
               {value}
@@ -149,7 +143,7 @@ function DeploymentsPage() {
           );
         },
         className: 'text-center',
-      },      
+      },
       {
         Header: 'Access',
         accessor: 'access',
@@ -169,7 +163,6 @@ function DeploymentsPage() {
         accessor: 'manage',
         Cell: ({ row }) => {
           const { status, frontendInstanceId, backendInstanceId } = row.original;
- 
           return (
             <div className="flex justify-center gap-2">
               {status === 'deployed' && (
@@ -212,9 +205,9 @@ function DeploymentsPage() {
     ],
     []
   );
- 
+
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable({ columns, data: projects });
- 
+
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-200">
@@ -224,7 +217,7 @@ function DeploymentsPage() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-200">
@@ -234,9 +227,7 @@ function DeploymentsPage() {
       </div>
     );
   }
-  
-  
- 
+
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-200 py-8">
       {loadingAfterStart && (
@@ -297,6 +288,5 @@ function DeploymentsPage() {
     </div>
   );
 }
- 
-export default DeploymentsPage;
 
+export default DeploymentsPage;

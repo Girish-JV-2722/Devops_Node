@@ -35,9 +35,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     status: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.TEXT,
       allowNull: true,
-      defaultValue: false
+      defaultValue: null
     },
     ipAddress: {
       type: DataTypes.STRING,
@@ -54,6 +54,10 @@ module.exports = (sequelize, DataTypes) => {
     frontendInstanceId: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    backendIp: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'Applications',
@@ -61,7 +65,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Application.associate = function(models) {
-    // associations can be defined here
     Application.belongsTo(models.Users, {
       foreignKey: 'userId',
       onUpdate: 'CASCADE',

@@ -41,6 +41,7 @@ export default function FormPage() {
   const [token, setToken] = useState(localStorage.getItem("accessToken"));
   const { projectId } = useParams();
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,6 +92,7 @@ export default function FormPage() {
           toast.error("Failed to obtain GitHub access token");
           console.log("failed obtained token");
         }
+        navigate("/");
       }
       getAccessToken();
     }
@@ -120,6 +122,7 @@ export default function FormPage() {
       "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID
     );
     // window.location.href="http://localhost:3000/auth/github/";
+    navigate("/");
   };
 
 
@@ -161,6 +164,7 @@ export default function FormPage() {
               navigate(`/deployments`);
             }, 5000);
           }, 120000);
+
 
         });
 
@@ -267,13 +271,7 @@ export default function FormPage() {
             name="portNumber"
             value={formData.portNumber || ""}
             onChange={handleOnChange}
-            placeholder="Port Number"
-          />
-          <TextInput
-            name="nodeVersion"
-            value={formData?.nodeVersion}
-            onChange={handleOnChange}
-            placeholder="Node Version"
+            placeholder="Backend Port Number"
           />
           <TextInput
             name="runCommand"
@@ -293,11 +291,23 @@ export default function FormPage() {
             onChange={handleOnChange}
             placeholder="Frontend GitHub Repository"
           />
+           <TextInput
+            name="frontendNodeVersion"
+            value={formData?.frontendNodeVersion}
+            onChange={handleOnChange}
+            placeholder="Frontend Node Version"
+          />
           <TextInput
             name="backendRepoUrl"
             value={formData?.backendRepoUrl}
             onChange={handleOnChange}
             placeholder="Backend GitHub Repository"
+          />
+           <TextInput
+            name="nodeVersion"
+            value={formData?.nodeVersion}
+            onChange={handleOnChange}
+            placeholder="Backend Node Version"
           />
           <button
             type="submit"

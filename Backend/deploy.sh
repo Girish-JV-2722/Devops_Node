@@ -112,24 +112,37 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+
+
+
   backend:
-    image: ${DOCKER_USERNAME}/backend-image:latest
+    image: ${DOCKER_USERNAME}/${projectName}-backend-image:latest
     environment:
       DB_HOST: mysql
-      DB_USER: your_database_user
-      DB_PASSWORD: your_database_password
-      DB_NAME: your_database_name
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
       DB_PORT: 3306
     ports:
       - "80:3000"
     depends_on:
       - mysql
-  
-
-  frontend:
-    image: ${DOCKER_USERNAME}/frontend-image:latest
-    ports:
-      - "3000:3000"
+    
+volumes:
+  mysql-data:
 EOL
 else
   echo "Invalid PROJECT_TYPE specified"

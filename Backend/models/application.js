@@ -29,6 +29,31 @@ module.exports = (sequelize, DataTypes) => {
     nodeVersion: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    projectId: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: false
+    },
+    ipAddress: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    port: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+    backendInstanceId: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    frontendInstanceId: {
+      type: DataTypes.TEXT,
+      allowNull: true
     }
   }, {
     tableName: 'Applications',
@@ -39,6 +64,11 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     Application.belongsTo(models.Users, {
       foreignKey: 'userId',
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE'
+    });
+    Application.belongsTo(models.Projects, {
+      foreignKey: 'projectId',
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     });

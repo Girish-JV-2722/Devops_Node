@@ -6,14 +6,21 @@ const fsExtra = require('fs-extra');
 
 require('dotenv').config();
 
-const ec2 = new AWS.EC2({
-  region: 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
+let backendInstanceId;
+let frontendInstanceId;
 
-const backendRepoUrl = process.env.BACKEND_REPO_URL;
-const frontendRepoUrl = process.env.FRONTEND_REPO_URL;
+const createEC2=async(AWS_Accesskey,AWS_Secretkey,region)=>{
+  
+  const ec2 = new AWS.EC2({
+    region:region,
+    accessKeyId:AWS_Accesskey,
+    secretAccessKey:AWS_Secretkey,
+  });
+  return ec2;
+}
+
+// const backendRepoUrl = process.env.BACKEND_REPO_URL;
+// const frontendRepoUrl = process.env.FRONTEND_REPO_URL;
 const targetDir_backend = "./cloned-repo-backend";
 const targetDir_frontend = "./cloned-repo-frontend";
 
@@ -93,45 +100,77 @@ async function addconfig(){
     console.error('Error:', error);
   }
 }
-async function buildDockerImageBackend() {
+
+async function updateOrCreateEnvFile(repoPath, backendIp) {
+  const envFilePath = path.join(repoPath, '.env');
+  const envVar = `VITE_BACKEND_URL="http://${backendIp}"`;
+  
+  if (fs.existsSync(envFilePath)) {
+    // Read the existing .env file
+    let envFileContent = fs.readFileSync(envFilePath, 'utf-8');
+    
+    if (envFileContent.includes('VITE_BACKEND_URL')) {
+      // Update the existing VITE_BACKEND_URL
+      envFileContent = envFileContent.replace(/VITE_BACKEND_URL=.*/, envVar);
+    } else {
+      // Append the VITE_BACKEND_URL variable
+      envFileContent += `\n${envVar}`;
+    }
+    
+    // Write the updated content back to the .env file
+    fs.writeFileSync(envFilePath, envFileContent, 'utf-8');
+  } else {
+    // Create a new .env file with the VITE_BACKEND_URL variable
+    fs.writeFileSync(envFilePath, envVar, 'utf-8');
+  }
+}
+
+async function buildDockerImageBackend(dockerUsername,portNumber,nodeVersion,backendRepoUrl,projectName) {
+  let parts = backendRepoUrl.split('/');
+  let AppDir = parts[parts.length - 1].replace('.git', '');
+  
+  const nodeversion = nodeVersion ;
+  const appDir = AppDir ;
+  const appPort = portNumber ;
+
   try {
     console.log('Building Docker image for backend...');
-    const dockerUsername = process.env.DOCKER_USERNAME;
+  
     if (!dockerUsername) {
       throw new Error('DOCKER_USERNAME environment variable is not set.');
     }
-    await runCommand(`docker rmi -f ${dockerUsername}/backend-image:latest || true`);
-    await runCommand(`docker build -t ${dockerUsername}/backend-image:latest -f ./Backend-DockerFile/Dockerfile .`);
+    await runCommand(`docker rmi -f ${dockerUsername}/${projectName.toLowerCase()}-backend-image:latest || true`);
+    await runCommand(`docker build -t ${dockerUsername}/${projectName.toLowerCase()}-backend-image:latest -f ./Backend-DockerFile/Dockerfile .`);
     console.log('Backend Docker image built successfully.');
   } catch (error) {
     console.error(`Failed to build Docker image: ${error}`);
   }
 }
 
-async function buildDockerImageFrontend() {
+async function buildDockerImageFrontend(dockerUsername,projectName){
   try {
     console.log('Building Docker image for frontend...');
-    const dockerUsername = process.env.DOCKER_USERNAME;
-    if (!dockerUsername) {
-      throw new Error('DOCKER_USERNAME environment variable is not set.');
+ 
+    if (!projectName) {
+      throw new Error('projectName environment variable is not set.');
     }
-    await runCommand(`docker rmi -f ${dockerUsername}/frontend-image:latest || true`);
-    await runCommand(`docker build -t ${dockerUsername}/frontend-image:latest -f ./frontend-Dockerfile/Dockerfile .`);
+    await runCommand(`docker rmi -f ${dockerUsername}/${projectName.toLowerCase()}-frontend-image:latest || true`);
+    await runCommand(`docker build -t ${dockerUsername}/${projectName.toLowerCase()}-frontend-image:latest -f ./frontend-Dockerfile/Dockerfile .`);
     console.log('Frontend Docker image built successfully.');
   } catch (error) {
     console.error(`Failed to build Docker image: ${error}`);
   }
 }
 
-async function pushDockerImage(imageName) {
+async function pushDockerImage(imageName,dockerUsername,dockerPassword,projectName) {
   console.log(`Pushing Docker image ${imageName} to Docker Hub...`);
-  const dockerUsername = process.env.DOCKER_USERNAME;
-  await runCommand(`docker login -u ${dockerUsername} -p ${process.env.DOCKER_PASSWORD}`);
-  await runCommand(`docker push ${dockerUsername}/${imageName}:latest`);
+  // const dockerUsername = DOCKER_USERNAME;
+  await runCommand(`docker login -u ${dockerUsername} -p ${dockerPassword}`);
+  await runCommand(`docker push ${dockerUsername}/${projectName.toLowerCase()}-${imageName}:latest`);
   console.log(`${imageName} Docker image pushed to Docker Hub successfully.`);
 }
 
-async function getOrCreateSecurityGroup() {
+async function getOrCreateSecurityGroup(ec2) {
   // Check if security group exists
   const params = {
     Filters: [
@@ -162,7 +201,7 @@ async function getOrCreateSecurityGroup() {
             const result = await ec2.createSecurityGroup(createParams).promise();
             console.log('Created new security group:', result.GroupId);
             // Add inbound rules to the new security group
-            await addInboundRules(result.GroupId);
+            await addInboundRules(ec2,result.GroupId);
             resolve(result.GroupId);
           } catch (createErr) {
             console.error('Error creating security group:', createErr);
@@ -175,7 +214,7 @@ async function getOrCreateSecurityGroup() {
 }
 
 
-async function addInboundRules(securityGroupId) {
+async function addInboundRules(ec2,securityGroupId) {
   const params = {
     GroupId: securityGroupId,
     IpPermissions: [
@@ -208,19 +247,20 @@ async function addInboundRules(securityGroupId) {
 }
 
 //Backend Deploy to EC2
-async function deployToEC2(projectType) {
+async function deployToEC2(ec2,projectType,dockerUsername,projectName) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
   const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
-    .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
+    .replace(/\${DOCKER_USERNAME}/g, dockerUsername)
     .replace(/\${PROJECT_TYPE}/g, projectType)
     .replace(/\${MYSQL_ROOT_PASSWORD}/g, process.env.MYSQL_ROOT_PASSWORD)
     .replace(/\${MYSQL_DATABASE}/g, process.env.MYSQL_DATABASE)
     .replace(/\${MYSQL_USER}/g, process.env.MYSQL_USER)
-    .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD);
+    .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD)
+    .replace(/\${projectName}/g, projectName);
   
-  const securityGroupId = await getOrCreateSecurityGroup();
+  const securityGroupId = await getOrCreateSecurityGroup(ec2);
 
   const params = {
     ImageId: 'ami-0427090fd1714168b',
@@ -238,11 +278,12 @@ async function deployToEC2(projectType) {
         reject(err);
       } else {
         const instanceId = data.Instances[0].InstanceId;
+        backendInstanceId=instanceId;
         console.log('Instance ID:', instanceId);
 
         // Wait for the instance to reach the 'running' state
-        await waitForInstanceToRun(instanceId);
-        const publicIp = await getPublicIpAddress(instanceId);
+        await waitForInstanceToRun(instanceId,ec2);
+        const publicIp = await getPublicIpAddress(instanceId,ec2);
         resolve(publicIp);
       }
     });
@@ -250,17 +291,18 @@ async function deployToEC2(projectType) {
 }
 
 //Frontend deploying
-async function deployFrontendToEC2(projectType,backendIp) {
+async function deployFrontendToEC2(ec2,projectType,dockerUsername,backendIp,projectName) {
   console.log('Deploying to EC2...');
 
   // Read deploy.sh file and replace placeholders
   const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
-    .replace(/\${DOCKER_USERNAME}/g, process.env.DOCKER_USERNAME)
+    .replace(/\${DOCKER_USERNAME}/g,dockerUsername)
     .replace(/\${PROJECT_TYPE}/g, projectType)
-    .replace(/\${BACKEND_IP}/g,backendIp);
+    .replace(/\${BACKEND_IP}/g,backendIp)
+    .replace(/\${projectName}/g, projectName);
     
   
-  const securityGroupId = await getOrCreateSecurityGroup();
+  const securityGroupId = await getOrCreateSecurityGroup(ec2);
 
   const params = {
     ImageId: 'ami-0427090fd1714168b',
@@ -278,11 +320,12 @@ async function deployFrontendToEC2(projectType,backendIp) {
         reject(err);
       } else {
         const instanceId = data.Instances[0].InstanceId;
+        frontendInstanceId=instanceId;
         console.log('Instance ID:', instanceId);
 
         // Wait for the instance to reach the 'running' state
-        await waitForInstanceToRun(instanceId);
-        const publicIp = await getPublicIpAddress(instanceId);
+        await waitForInstanceToRun(instanceId,ec2);
+        const publicIp = await getPublicIpAddress(instanceId,ec2);
         resolve(publicIp);
       }
     });
@@ -290,7 +333,7 @@ async function deployFrontendToEC2(projectType,backendIp) {
 }
 
 // Wait for instance to run
-function waitForInstanceToRun(instanceId) {
+function waitForInstanceToRun(instanceId,ec2) {
   const params = {
     InstanceIds: [instanceId],
   };
@@ -307,7 +350,7 @@ function waitForInstanceToRun(instanceId) {
 }
 
 // Get public IP address of EC2 instance
-function getPublicIpAddress(instanceId) {
+function getPublicIpAddress(instanceId,ec2) {
   const params = {
     InstanceIds: [instanceId],
   };
@@ -336,31 +379,39 @@ async function removeClonedRepo(targetDir_backend, targetDir_frontend) {
 }
 
 // Main function to run all tasks
-async function main() {
+async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName) {
   const projectType = 'backend'; // Change this value to 'frontend' or 'both' as needed
-
+  let publicIp;
   try {
-   
+    console.log(projectName);
+
+      const ec2=await createEC2(AWS_Accesskey,AWS_Secretkey,region);
+
       await cloneRepo(backendRepoUrl, targetDir_backend);
       await addconfig();
-      await buildDockerImageBackend();
-      await pushDockerImage('backend-image');
+      await buildDockerImageBackend(dockerUsername,portNumber,nodeVersion,backendRepoUrl,projectName);
+      await pushDockerImage('backend-image',dockerUsername,dockerPassword,projectName);
     
-   
       await cloneRepo(frontendRepoUrl, targetDir_frontend);
-      await buildDockerImageFrontend();
-      await pushDockerImage('frontend-image');
-    
-      const backendIp = await deployToEC2('backend');
-      const publicIp = await deployFrontendToEC2('frontend',backendIp);
-      console.log('Deployment successful. frontend IP Address:', publicIp);
+      const backendIp = await deployToEC2(ec2,'backend',dockerUsername,projectName);
       console.log('Deployment successful. backend IP Address:', backendIp);
+
+      await updateOrCreateEnvFile(targetDir_frontend, backendIp);
+      await buildDockerImageFrontend(dockerUsername,projectName);
+      await pushDockerImage('frontend-image',dockerUsername,dockerPassword,projectName);
+      publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
+
+      console.log('Deployment successful. frontend IP Address:', publicIp);
+      const data={status:true,publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId};
+      return data;
+      
   } catch (error) {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
     console.error('Deployment failed:', error);
   } finally {
     await removeClonedRepo(targetDir_backend, targetDir_frontend).catch(err => console.error(`Failed to remove cloned repository: ${err.message}`));
+    return data={ status:true,publicIp:publicIp,port:portNumber,frontendInstanceId,backendInstanceId };
   }
 }
 
-main();
+module.exports = { main };

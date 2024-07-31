@@ -1,32 +1,320 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
+const AWS = require('aws-sdk');
 // Import the mysql2 package
 // Import the mysql2 package and dotenv
-const mysql = require('mysql2');
-
+const { main } = require('../Deploy');
+const mysql = require("mysql2");
+const fetch = (...args) =>import("node-fetch").then(({ default: fetch }) => fetch(...args));
+let deploydata={};
 // Create a connection to the database using environment variables
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
 });
 
+
+const createEC2=async(AWS_Accesskey,AWS_Secretkey,region)=>{
+  
+  const ec2 = new AWS.EC2({
+    region:region,
+    accessKeyId:AWS_Accesskey,
+    secretAccessKey:AWS_Secretkey,
+  });
+  return ec2;
+}
+
+
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('autodevops4', 'admin', 'admin123', {
+  host: process.env.DB_HOST,
+  dialect: 'mysql'
+});
+
+const User = require('../models/user')(sequelize, DataTypes);
+const GitCredentials = require('../models/gitcredentials')(sequelize, DataTypes);
+const DockerhubCredentials = require('../models/dockercredentials')(sequelize, DataTypes);
+const Deployment = require('../models/deployments')(sequelize, DataTypes);
+const Project = require('../models/project')(sequelize, DataTypes);
+
+const Application= require('../models/application')(sequelize, DataTypes);
 // Connect to the database
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to the database:', err);
+    console.error("Error connecting to the database:", err);
     return;
   }
-  console.log('Connected to the MySQL database');
+  console.log("Connected to the MySQL database");
 });
-
-module.exports = connection;
-
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get("/getAccessToken", async function (req, res, next) {
+  console.log(req.query.code);
+  const params =
+    "?client_id=" +
+    process.env.GITHUB_CLIENT_ID +
+    "&client_secret=" +
+    process.env.GITHUB_SECRET_KEY +
+    "&code=" +
+    req.query.code;
+  await fetch("https://github.com/login/oauth/access_token" + params, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+    },
+  })
+    .then((response) => {
+      console.log(response);
+      return response.json();
+    })
+    .then((data) => {
+      console.log(data);
+      res.json(data);
+      
+    });
 });
+
+router.post("/configureApplication", async function (req, res) {
+  req.get("Authorization"); // Bearer accesstoken
+  
+  // console.log("REQUEST:");
+  //  console.log(req);
+  await fetch("https://api.github.com/user", {
+    method: "GET",
+    headers: {
+      "Authorization": req.get("Authorization"),
+      
+    },
+  })
+    .then((response) => {
+      // console.log(response);
+      return response.json();
+    })
+    .then(async (data) => {
+     
+  
+       console.log(req.body);
+    
+        const {  AWS_Accesskey,AWS_Secretkey,gitToken}=req.body;
+        let user = await User.findOne({ where: { id:data.id } });
+        console.log(user);
+        if (!user) {
+         let user = await User.create({
+            id: data.id,
+            AWS_Accesskey,
+            AWS_Secretkey,
+          });
+        }
+          console.log(gitToken);
+          let gitCredentials= await GitCredentials.findOne({ where: {userId:data.id} });
+        if(!gitCredentials){
+          await gitCredentials.create({
+            userId:data.id,
+            gitUsername: data.login,
+            gitToken: gitToken,
+          });
+      
+        }
+        // } else {
+        //   let GitCredentials = await gitcredentials.findOne({
+        //     where: { userId: data.id },
+        //   });
+        //   await GitCredentials.update({ gitToken: accessToken });
+        // }
+
+      
+      //application table
+
+         //dockerhub table
+      
+    
+        const {
+          dockerUsername,
+          dockerPassword,
+         
+        } = req.body;
+       
+        
+        // let GitCredentials= await gitcredentials.findOne({ where: { gitToken: token} });
+
+        const dockerHubCredentials = await DockerhubCredentials.create({
+          userId:data.id,
+          dockerUsername,
+          dockerPassword,
+        });
+    
+       
+     
+        const {
+    
+          region,
+          environment,
+          gitUrl,
+          nodeVersion,
+          portNumber,
+          backendRepoUrl,
+          frontendRepoUrl,
+        } = req.body;
+        const {projectId} = req.query;
+        console.log("projectId: "+ projectId);
+        if (!projectId) {
+          return res.status(400).json({ error: "Project ID is missing" });
+        }
+        
+        
+        
+    
+        // await newApplication.save();
+    
+        // const AWS_Accesskey=user.AWS_Accesskey;
+        // const AWS_Secretkey=user.AWS_Secretkey;
+        // const gitUrl=application.gitUrl;
+        // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
+        // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
+        let project= await Project.findOne({ where: {projectId:projectId}});
+        let projectName=project.projectName;
+        console.log(projectName);
+         deploydata=await main(data.id,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,dockerUsername,portNumber,nodeVersion,backendRepoUrl,frontendRepoUrl,projectName);
+         
+         
+         console.log(deploydata);
+
+         //Application
+
+         const newApplication = await Application.create({
+          region,
+          environment,
+          gitUrl,
+          // scripts,
+          nodeVersion,
+          projectId,
+          userId:data.id,
+          status:deploydata.status,
+          ipAddress:deploydata.publicIp,
+          port:deploydata.port,
+          frontendInstanceId:deploydata.frontendInstanceId,
+          backendInstanceId:deploydata.backendInstanceId,
+        });
+    
+        
+    
+        //deployemnts
+        try {
+          const {environment } = req.body;
+      
+          // Validate the input as necessary
+      
+          const newDeployment = await Deployment.create({
+            userId:user.id,
+            applicationId:newApplication.applicationId,
+            status:deploydata.status,
+            log:"Something",
+            environment,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+           
+
+          res.status(201).json({newDeployment,deploydata});
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: 'An error occurred while creating the deployment.' });
+        }
+      
+      
+
+      // res.json(data);
+    });
+
+});
+
+router.get("/getAllApp", async function (req, res, next) {
+  try {
+    
+    // let projects= await Project.findAll();
+    // let deployments= await Deployment.findAll();
+    let applications=await Application.findAll();
+    let projects=await Project.findAll();
+    res.status(200).json({deploydata,applications,projects});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+  });
+
+  router.get(`/configure/:projectId/success`, async function (req, res, next) {
+    try {
+      const projectId = req.params.projectId;
+      let projects=await Project.findOne({projectId:projectId});
+      let applications=await Application.findOne({projectId:projectId});
+     
+      res.status(200).json({deploydata,applications,projects});
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+    });
+
+    router.get("/stopInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.stopInstances(params).promise();
+        res.status(200).json(data.StoppingInstances);
+       
+      } catch (err) {
+        res.status(200).json({"error":err});
+      }
+    })
+
+    router.get("/startInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.startInstances(params).promise();
+        // console.log("Success", );
+        res.status(200).json(data.StartingInstances);
+      } catch (err) {
+        res.status(200).json({"error":err});
+      }
+    })
+
+    router.get("/terminateInstance",async function(req,res){
+      const {frontendInstanceId,backendInstanceId}=req.query;
+      
+      let application=await Application.findOne({frontendInstanceId:frontendInstanceId});
+      let user = await User.findOne({id:application.userId});
+
+      const ec2=await createEC2(user.AWS_Accesskey,user.AWS_Secretkey,application.region);
+     
+      const params = {
+        InstanceIds: [frontendInstanceId,backendInstanceId]
+      };
+    
+      try {
+        const data = await ec2.terminateInstances(params).promise();
+        res.status(200).json(data.TerminatingInstances);
+        
+      } catch (err) {
+        res.status(200).json({"error":err});
+      
+      }
+    })
+  
 
 module.exports = router;

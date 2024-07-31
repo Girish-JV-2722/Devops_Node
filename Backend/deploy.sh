@@ -86,7 +86,7 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
 
 
   backend:
-    image: ${DOCKER_USERNAME}/backend-image:latest
+    image: ${DOCKER_USERNAME}/${projectName}-backend-image:latest
     environment:
       DB_HOST: mysql
       DB_USER: ${MYSQL_USER}
@@ -104,11 +104,11 @@ EOL
 elif [ "$PROJECT_TYPE" = "frontend" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
   frontend:
-    image: ${DOCKER_USERNAME}/frontend-image:latest
+    image: ${DOCKER_USERNAME}/${projectName}-frontend-image:latest
     ports:
       - "80:80"
     environment:
-      BACKEND_URL: ${BACKEND_IP}
+      VITE_BACKEND_URL: ${BACKEND_IP}
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL

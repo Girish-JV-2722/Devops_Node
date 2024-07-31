@@ -230,6 +230,12 @@ async function addInboundRules(ec2,securityGroupId,portNumber) {
         ToPort: 80,
         IpRanges: [{ CidrIp: '0.0.0.0/0' }],
       },
+      {
+        IpProtocol: 'tcp',
+        FromPort: 3306,
+        ToPort: 3306,
+        IpRanges: [{ CidrIp: '0.0.0.0/0' }],
+      },
     ],
   };
 
@@ -245,11 +251,38 @@ async function addInboundRules(ec2,securityGroupId,portNumber) {
     });
   });
 }
+async function getOrCreateKeyPair(ec2, keyName) {
+    try {
+      const keyPairs = await ec2.describeKeyPairs({ KeyNames: [keyName] }).promise();
+      if (keyPairs.KeyPairs.length > 0) {
+        console.log(`Key pair ${keyName} already exists.`);
+        return keyName;
+      }
+    } catch (err) {
+      if (err.code !== 'InvalidKeyPair.NotFound') {
+        console.error('Error describing key pairs:', err);
+        throw err;
+      }
+    }
+  
+    const params = {
+      KeyName: keyName,
+    };
+  
+    try {
+      const result = await ec2.createKeyPair(params).promise();
+      console.log(`Created new key pair ${keyName}`);
+      fs.writeFileSync(`${keyName}.pem`, result.KeyMaterial);
+      console.log(`Saved key pair to ${keyName}.pem`);
+      return keyName;
+    } catch (err) {
+      console.error('Error creating key pair:', err);
+      throw err;
+    }
+}
 
 //Backend Deploy to EC2
 async function deployToEC2(ec2,projectType,dockerUsername,projectName,portNumber) {
-  console.log('Deploying to EC2...');
-
   // Read deploy.sh file and replace placeholders
   const userDataScript = fs.readFileSync(path.join(__dirname, 'deploy.sh'), 'utf8')
     .replace(/\${DOCKER_USERNAME}/g, dockerUsername)
@@ -260,15 +293,14 @@ async function deployToEC2(ec2,projectType,dockerUsername,projectName,portNumber
     .replace(/\${MYSQL_PASSWORD}/g, process.env.MYSQL_PASSWORD)
     .replace(/\${projectName}/g, projectName.toLowerCase())
     .replace(/\${portNumber}/g, portNumber);
-
-  
   const securityGroupId = await getOrCreateSecurityGroup(ec2,portNumber);
-
+  const KeyName = await getOrCreateKeyPair(ec2, process.env.KEY_PAIR);
   const params = {
     ImageId: 'ami-0427090fd1714168b',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
+    KeyName: KeyName,
     SecurityGroupIds: [securityGroupId],
     UserData: Buffer.from(userDataScript).toString('base64'),
   };
@@ -305,12 +337,14 @@ async function deployFrontendToEC2(ec2,projectType,dockerUsername,backendIp,proj
     
   
   const securityGroupId = await getOrCreateSecurityGroup(ec2);
+  const KeyName = await getOrCreateKeyPair(ec2, process.env.KEY_PAIR);
 
   const params = {
     ImageId: 'ami-0427090fd1714168b',
     InstanceType: 't2.micro',
     MaxCount: 1,
     MinCount: 1,
+    KeyName: KeyName,
     SecurityGroupIds: [securityGroupId],
     UserData: Buffer.from(userDataScript).toString('base64'),
   };
@@ -350,6 +384,26 @@ function waitForInstanceToRun(instanceId,ec2) {
     });
   });
 }
+async function waitForInstanceChecks(ec2, instanceId) {
+  const params = {
+    InstanceIds: [instanceId],
+  };
+
+  try {
+    await ec2.waitFor('instanceStatusOk', params).promise();
+    console.log('Instance status is OK.');
+    
+    await ec2.waitFor('systemStatusOk', params).promise();
+    console.log('System status is OK.');
+    
+    const data = await ec2.describeInstances(params).promise();
+    return data.Reservations[0].Instances[0];
+  } catch (err) {
+    console.error('Error waiting for instance or system status to be OK:', err);
+    throw err;
+  }
+}
+
 
 // Get public IP address of EC2 instance
 function getPublicIpAddress(instanceId,ec2) {
@@ -404,7 +458,7 @@ async function main(userid,AWS_Accesskey,AWS_Secretkey,region,dockerPassword,doc
       await buildDockerImageFrontend(dockerUsername,projectName,frontendNodeVersion);
       await pushDockerImage('frontend-image',dockerUsername,dockerPassword,projectName);
       publicIp = await deployFrontendToEC2(ec2,'frontend',dockerUsername,backendIp,projectName);
-
+      await waitForInstanceChecks(ec2, frontendInstanceId);
       console.log('Deployment successful. frontend IP Address:', publicIp);
       status="deployed";
       const data={status:status,publicIp:publicIp,port:portNumber,frontendInstanceId:frontendInstanceId,backendInstanceId:backendInstanceId,backendIp:backendIp};

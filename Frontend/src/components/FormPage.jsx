@@ -162,8 +162,8 @@ export default function FormPage() {
 
             setTimeout(() => {
               navigate(`/deployments`);
-            }, 5000);
-          }, 120000);
+            }, 4000);
+          }, 10000); //10 sec
 
 
         });

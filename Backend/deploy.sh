@@ -71,7 +71,7 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
   mysql:
     image: mysql:5.7
-    container_name: mysql_db
+    container_name: ${projectName}_mysql_db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -87,6 +87,7 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
 
   backend:
     image: ${DOCKER_USERNAME}/${projectName}-backend-image:latest
+    container_name: ${projectName}_backend
     environment:
       DB_HOST: mysql
       DB_USER: ${MYSQL_USER}
@@ -105,6 +106,7 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
   frontend:
     image: ${DOCKER_USERNAME}/${projectName}-frontend-image:latest
+    container_name: ${projectName}_frontend
     ports:
       - "80:80"
     environment:

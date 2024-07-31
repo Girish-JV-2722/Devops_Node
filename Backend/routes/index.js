@@ -8,6 +8,185 @@ const mysql = require("mysql2");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 let deploydata = {};
+
+
+const fs = require("fs");
+const { Client } = require("ssh2");
+
+async function deployDockerImages(ipAddress, backendIp, dockerUsername, projectName) {
+  const restartContainers = (ip, containerNames) => {
+    return new Promise((resolve, reject) => {
+      const conn = new Client(); // Correct: Create a new instance of `Client` directly
+      conn
+        .on("ready", () => {
+          conn.exec(
+            containerNames
+              .map(
+                (name) => `
+            docker stop ${name} || true
+            docker rm ${name} || true
+            docker run -d --name ${name} ${name}
+          `
+              )
+              .join(" && "),
+            (err, stream) => {
+              if (err) return reject(err);
+              stream
+                .on("close", () => {
+                  conn.end();
+                  resolve();
+                })
+                .on("data", (data) => {
+                  console.log("OUTPUT: " + data);
+                })
+                .stderr.on("data", (data) => {
+                  console.log("STDERR: " + data);
+                });
+            }
+          );
+        })
+        .connect({
+          host: ip,
+          port: 22,
+          username: "ec2-user", // or other appropriate username
+          privateKey: fs.readFileSync(
+             "C:/Users/Mandar/OneDrive/Desktop/New folder (3)/Devops_Node/Backend/newKey.pem"
+          ),
+        });
+    });
+  };
+
+  const frontendImage = `${projectName}_frontend`;
+  const backendImage = `${projectName}_backend`;
+  const mysqlImage = `${projectName}_mysql_db`;
+
+  try {
+    // Restart frontend container
+    await restartContainers(ipAddress, [frontendImage]);
+
+    // Restart backend and MySQL containers
+    await restartContainers(backendIp, [backendImage, mysqlImage]);
+
+    console.log("Docker containers redeployed successfully.");
+  } catch (err) {
+    console.error("Error redeploying Docker containers:", err.message);
+  }finally{
+    console.error("Error:", err.message);
+  }
+}
+
+
+router.get("/terminateInstance", async function (req, res) {
+  const { frontendInstanceId, backendInstanceId } = req.query;
+
+  let application = await Application.findOne({
+    frontendInstanceId: frontendInstanceId,
+  });
+  let user = await User.findOne({ id: application.userId });
+
+  const ec2 = await createEC2(
+    user.AWS_Accesskey,
+    user.AWS_Secretkey,
+    application.region
+  );
+
+  const params = {
+    InstanceIds: [frontendInstanceId, backendInstanceId],
+  };
+
+  try {
+    const data = await ec2.terminateInstances(params).promise();
+    try {
+      const result = await Application.destroy({
+        where: {
+          applicationId: application.applicationId,
+        },
+      });
+
+      if (result === 0) {
+        console.log("No application found with the given ID.");
+      } else {
+        console.log("Application deleted successfully.");
+      }
+    } catch (error) {
+      console.error("Error deleting application:", error);
+    }
+    res.status(200).json(data.TerminatingInstances);
+  } catch (err) {
+    res.status(500).json({ error: err });
+  }
+});
+
+router.get("/instanceStatus", async function (req, res) {
+  const { frontendInstanceId } = req.query;
+
+  let application = await Application.findOne({
+    where: { frontendInstanceId: frontendInstanceId },
+  });
+  let user = await User.findOne({ where: { id: application.userId } });
+
+  const ec2 = await createEC2(
+    user.AWS_Accesskey,
+    user.AWS_Secretkey,
+    application.region
+  );
+
+  try {
+    const params = {
+      InstanceIds: [frontendInstanceId],
+    };
+
+    // Describe instance status
+    const data = await ec2.describeInstanceStatus(params).promise();
+
+    if (data.InstanceStatuses.length === 0) {
+      console.log(
+        `Instance ${frontendInstanceId} does not exist or is not in a running or stopped state.`
+      );
+      return;
+    }
+
+    // Extract instance status information
+    const instanceStatus = data.InstanceStatuses[0];
+    const systemStatus = instanceStatus.SystemStatus.Status;
+    const instanceState = instanceStatus.InstanceState.Name;
+
+    console.log(`Instance ${frontendInstanceId} Status:`);
+    console.log(`- System Status: ${systemStatus}`);
+    console.log(`- Instance State: ${instanceState}`);
+
+    if (instanceState === "running") {
+      const instanceHealth = instanceStatus.InstanceStatus.Status;
+      console.log(`- Instance Health: ${instanceHealth}`);
+      res
+        .status(200)
+        .json({ instanceHealth: instanceHealth, instanceState: instanceState });
+    } else {
+      res.status(200).json({ data: instanceState });
+    }
+  } catch (error) {
+    console.error("Error describing instance status:", error);
+    res.status(500).json({ error: error });
+  }
+});
+
+async function waitForInstanceChecks(ec2, params) {
+  try {
+    await ec2.stopInstances(params).promise();
+    console.log("Instance stop initiated.");
+
+    // Wait for the instance to be in 'stopped' state
+    await ec2.waitFor("instanceStopped", params).promise();
+    console.log("Instance is stopped.");
+    
+    const data = await ec2.describeInstances(params).promise();
+    return data.Reservations[0].Instances[0];
+  } catch (err) {
+    console.error("Error waiting for instance or system status to be OK:", err);
+    throw err;
+  }
+}
+
 // Create a connection to the database using environment variables
 const connection = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -171,10 +350,9 @@ router.post("/configureApplication", async function (req, res) {
       // // const DOCKER_USERNAME=dockercredentials.dockerUsername;
       // // const DOCKER_PASSWORD=dockercredentials.dockerPassword;
       let project = await Project.findOne({ where: { projectId: projectId } });
-      
+
       let projectName = project.projectName;
       console.log(projectName);
-
 
       deploydata = await main(
         data.id,
@@ -281,6 +459,8 @@ router.get("/stopInstance", async function (req, res) {
 
   try {
     const data = await ec2.stopInstances(params).promise();
+    await waitForInstanceChecks(ec2, params);
+
     application.status = "stopped";
     await application.save();
     res.status(200).json(data.StoppingInstances);
@@ -318,161 +498,37 @@ router.get("/startInstance", async function (req, res) {
         },
       }
     );
-    await deployDockerImages(frontendIpAddress, backendIpAddress, dockerUsername, projectName);
+    const app=await Application.findOne(
+     
+      {
+        where: {
+          applicationId: application.applicationId,
+        },
+      }
+    );
+    const proj = await Project.findOne({ where: { projectId: app.projectId } });
+    const dockerHubCredential = await DockerhubCredentials.findOne({
+      where: { userId: app.userId },
+    });
+
+    console.log(
+      app.ipAddress,
+      app.backendIp,
+      dockerHubCredential.dockerUsername,
+      proj.projectName,
+    );
+
+    await deployDockerImages(
+      app.ipAddress,
+      app.backendIp,
+      dockerHubCredential.dockerUsername,
+      proj.projectName,
+    );
     res.status(200).json(data.StartingInstances);
   } catch (err) {
     res.status(200).json({ error: err });
   }
 });
 
-const fs = require('fs');
-const { Client } = require('ssh2');
-
-async function deployDockerImages(frontendIp, backendIp, dockerUsername, projectName) {
-  const ssh = new Client();
-
-  const restartContainers = (ip, containerNames) => {
-    return new Promise((resolve, reject) => {
-      const conn = new ssh();
-      conn.on('ready', () => {
-        conn.exec(
-          containerNames.map(name => `
-            docker stop ${name} || true
-            docker rm ${name} || true
-            docker run -d --name ${name} ${name}
-          `).join(' && '),
-          (err, stream) => {
-            if (err) return reject(err);
-            stream.on('close', () => {
-              conn.end();
-              resolve();
-            }).on('data', (data) => {
-              console.log('OUTPUT: ' + data);
-            }).stderr.on('data', (data) => {
-              console.log('STDERR: ' + data);
-            });
-          }
-        );
-      }).connect({
-        host: ip,
-        port: 22,
-        username: 'ec2-user', // or other appropriate username
-        privateKey: fs.readFileSync('C:/Users/jvgir/Documents/devops/Devops_Node/Backend/my-new-key-pair.pem')
-      });
-    });
-  };
-
-  const frontendImage = `${dockerUsername}/${projectName}-frontend-image:latest`;
-  const backendImage = `${dockerUsername}/${projectName}-backend-image:latest`;
-  const mysqlImage = 'mysql:5.7'; // Update this if you have specific names for MySQL containers
-
-  try {
-    // Restart frontend container
-    await restartContainers(frontendIp, [frontendImage]);
-
-    // Restart backend and MySQL containers
-    await restartContainers(backendIp, [backendImage, mysqlImage]);
-
-    console.log('Docker containers redeployed successfully.');
-  } catch (err) {
-    console.error('Error redeploying Docker containers:', err.message);
-  }
-}
-
-
-
-router.get("/terminateInstance", async function (req, res) {
-  const { frontendInstanceId, backendInstanceId } = req.query;
-
-  let application = await Application.findOne({
-    frontendInstanceId: frontendInstanceId,
-  });
-  let user = await User.findOne({ id: application.userId });
-
-  const ec2 = await createEC2(
-    user.AWS_Accesskey,
-    user.AWS_Secretkey,
-    application.region
-  );
-
-  const params = {
-    InstanceIds: [frontendInstanceId, backendInstanceId],
-  };
-
-  try {
-    const data = await ec2.terminateInstances(params).promise();
-    try {
-      const result = await Application.destroy({
-        where: {
-          applicationId: application.applicationId,
-        },
-      });
-
-      if (result === 0) {
-        console.log("No application found with the given ID.");
-      } else {
-        console.log("Application deleted successfully.");
-      }
-    } catch (error) {
-      console.error("Error deleting application:", error);
-    }
-    res.status(200).json(data.TerminatingInstances);
-  } catch (err) {
-    res.status(500).json({ error: err });
-  }
-});
-
-router.get("/instanceStatus", async function (req, res) {
-  const { frontendInstanceId } = req.query;
-
-  let application = await Application.findOne({
-    where: { frontendInstanceId: frontendInstanceId },
-  });
-  let user = await User.findOne({ where: { id: application.userId } });
-
-  const ec2 = await createEC2(
-    user.AWS_Accesskey,
-    user.AWS_Secretkey,
-    application.region
-  );
-
-  try {
-    const params = {
-      InstanceIds: [frontendInstanceId],
-    };
-
-    // Describe instance status
-    const data = await ec2.describeInstanceStatus(params).promise();
-
-    if (data.InstanceStatuses.length === 0) {
-      console.log(
-        `Instance ${frontendInstanceId} does not exist or is not in a running or stopped state.`
-      );
-      return;
-    }
-
-    // Extract instance status information
-    const instanceStatus = data.InstanceStatuses[0];
-    const systemStatus = instanceStatus.SystemStatus.Status;
-    const instanceState = instanceStatus.InstanceState.Name;
-
-    console.log(`Instance ${frontendInstanceId} Status:`);
-    console.log(`- System Status: ${systemStatus}`);
-    console.log(`- Instance State: ${instanceState}`);
-
-    if (instanceState === "running") {
-      const instanceHealth = instanceStatus.InstanceStatus.Status;
-      console.log(`- Instance Health: ${instanceHealth}`);
-      res
-        .status(200)
-        .json({ instanceHealth: instanceHealth, instanceState: instanceState });
-    } else {
-      res.status(200).json({ data: instanceState });
-    }
-  } catch (error) {
-    console.error("Error describing instance status:", error);
-    res.status(500).json({ error: error });
-  }
-});
 
 module.exports = router;

@@ -69,7 +69,7 @@ function DeploymentsPage() {
   const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
     setLoadingAfterStart(true);
     try {
-      // const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
+      const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
       const data = 1;
       if (data) {
         console.log(data);
@@ -83,7 +83,8 @@ function DeploymentsPage() {
               : project
           ));
           setRerender(!rerender);
-        }, 180000); // 3 mins
+        }, 60000); // 3 mins
+        setRerender(!rerender);
       } else {
         setLoadingAfterStart(false);
         toast("Failed to start instance");

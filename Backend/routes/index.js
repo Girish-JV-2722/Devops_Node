@@ -13,67 +13,60 @@ let deploydata = {};
 const fs = require("fs");
 const { Client } = require("ssh2");
 
-async function deployDockerImages(ipAddress, backendIp, dockerUsername, projectName) {
-  const restartContainers = (ip, containerNames) => {
+
+async function deployDockerImages(frontendIp, backendIp, dockerUsername, projectName) {
+  const ssh = require('ssh2').Client;
+  const restartContainers = (ip, images) => {
     return new Promise((resolve, reject) => {
-      const conn = new Client(); // Correct: Create a new instance of `Client` directly
-      conn
-        .on("ready", () => {
-          conn.exec(
-            containerNames
-              .map(
-                (name) => `
-            docker stop ${name} || true
-            docker rm ${name} || true
-            docker run -d --name ${name} ${name}
-          `
-              )
-              .join(" && "),
-            (err, stream) => {
-              if (err) return reject(err);
-              stream
-                .on("close", () => {
-                  conn.end();
-                  resolve();
-                })
-                .on("data", (data) => {
-                  console.log("OUTPUT: " + data);
-                })
-                .stderr.on("data", (data) => {
-                  console.log("STDERR: " + data);
-                });
-            }
-          );
-        })
-        .connect({
-          host: ip,
-          port: 22,
-          username: "ec2-user", // or other appropriate username
-          privateKey: fs.readFileSync(
-             "C:/Users/Mandar/OneDrive/Desktop/New folder (3)/Devops_Node/Backend/newKey.pem"
-          ),
+      const conn = new ssh();
+      conn.on('ready', () => {
+        const commands = images.map(image => {
+          const containerName = `${projectName}_${image.split('/')[1].split(':')[0]}`; // Derive container name from image
+          return `
+            docker stop ${containerName} || true
+            docker rm ${containerName} || true
+            docker run -d --name ${containerName} ${image}
+          `;
+        }).join(' && ');
+
+        conn.exec(commands, (err, stream) => {
+          if (err) return reject(err);
+          stream.on('close', () => {
+            conn.end();
+            resolve();
+          }).on('data', (data) => {
+            console.log('OUTPUT: ' + data);
+          }).stderr.on('data', (data) => {
+            console.log('STDERR: ' + data);
+          });
         });
+      }).connect({
+        host: ip,
+        port: 22,
+        username: 'ec2-user',
+        privateKey: fs.readFileSync('C:/Users/jvgir/Documents/devops/Devops_Node/Backend/my-new-key-pair.pem')
+      });
     });
   };
 
-  const frontendImage = `${projectName}_frontend`;
-  const backendImage = `${projectName}_backend`;
-  const mysqlImage = `${projectName}_mysql_db`;
+  // Define Docker images
+  const frontendImage = `${dockerUsername}/${projectName}-frontend-image:latest`;
+  const backendImage = `${dockerUsername}/${projectName}-backend-image:latest`;
+  const mysqlImage = 'mysql:5.7';
 
   try {
     // Restart frontend container
-    await restartContainers(ipAddress, [frontendImage]);
+    await restartContainers(frontendIp, [frontendImage]);
 
     // Restart backend and MySQL containers
     await restartContainers(backendIp, [backendImage, mysqlImage]);
 
-    console.log("Docker containers redeployed successfully.");
+    console.log('Docker containers redeployed successfully.');
   } catch (err) {
-    console.error("Error redeploying Docker containers:", err.message);
-  }finally{
-    console.error("Error:", err.message);
+    console.error('Error redeploying Docker containers:', err.message);
   }
 }
+
 
 
 router.get("/terminateInstance", async function (req, res) {
@@ -170,7 +163,7 @@ router.get("/instanceStatus", async function (req, res) {
   }
 });
 
-async function waitForInstanceChecks(ec2, params) {
+async function waitForInstanceStopChecks(ec2, params) {
   try {
     await ec2.stopInstances(params).promise();
     console.log("Instance stop initiated.");
@@ -221,6 +214,7 @@ async function getInstanceIpAddress(ec2, instanceId) {
 }
 
 const { Sequelize, DataTypes } = require("sequelize");
+const { connect } = require("net");
 const sequelize = new Sequelize("autodevops4", "admin", "admin123", {
   host: process.env.DB_HOST,
   dialect: "mysql",
@@ -307,7 +301,7 @@ router.post("/configureApplication", async function (req, res) {
         where: { userId: data.id },
       });
       if (!gitCredentials) {
-        await gitCredentials.create({
+        await GitCredentials.create({
           userId: data.id,
           gitUsername: data.login,
           gitToken: gitToken,
@@ -459,7 +453,7 @@ router.get("/stopInstance", async function (req, res) {
 
   try {
     const data = await ec2.stopInstances(params).promise();
-    await waitForInstanceChecks(ec2, params);
+    await waitForInstanceStopChecks(ec2, params);
 
     application.status = "stopped";
     await application.save();
@@ -490,8 +484,9 @@ router.get("/startInstance", async function (req, res) {
     const data = await ec2.startInstances(params).promise();
 
     const ipAddress = await getInstanceIpAddress(ec2, frontendInstanceId);
+    const backendIpAddress = await getInstanceIpAddress(ec2, backendInstanceId);
     await Application.update(
-      { ipAddress: ipAddress, status: "deployed" },
+      { ipAddress: ipAddress, backendIp: backendIpAddress, status: "deployed" },
       {
         where: {
           applicationId: application.applicationId,
@@ -512,23 +507,85 @@ router.get("/startInstance", async function (req, res) {
     });
 
     console.log(
-      app.ipAddress,
-      app.backendIp,
+      ipAddress,
+      backendIpAddress,
       dockerHubCredential.dockerUsername,
       proj.projectName,
     );
-
-    await deployDockerImages(
-      app.ipAddress,
-      app.backendIp,
-      dockerHubCredential.dockerUsername,
-      proj.projectName,
-    );
+    await waitForInstanceStartChecks(ec2, frontendInstanceId);
+    await waitForInstanceStartChecks(ec2, backendInstanceId);
+    // await deployDockerImages(
+    //   ipAddress,
+    //   backendIpAddress,
+    //   dockerHubCredential.dockerUsername,
+    //   proj.projectName,
+    // );
     res.status(200).json(data.StartingInstances);
   } catch (err) {
     res.status(200).json({ error: err });
   }
 });
+async function waitForInstanceStartChecks(ec2, instanceId) {
+  const params = {
+    InstanceIds: [instanceId],
+  };
+
+  try {
+    await ec2.waitFor('instanceStatusOk', params).promise();
+    console.log('Instance status is OK.');
+    
+    await ec2.waitFor('systemStatusOk', params).promise();
+    console.log('System status is OK.');
+    
+    const data = await ec2.describeInstances(params).promise();
+    return data.Reservations[0].Instances[0];
+  } catch (err) {
+    console.error('Error waiting for instance or system status to be OK:', err);
+    throw err;
+  }
+}
+// const pauseContainers = (ip, privateKeyPath) => {
+//   return new Promise((resolve, reject) => {
+//     const conn = new ssh();
+//     conn.on('ready', () => {
+//       conn.exec('docker ps -q | xargs -I {} docker pause {}', (err, stream) => {
+//         if (err) return reject(err);
+//         stream.on('close', () => {
+//           conn.end();
+//           resolve();
+//         }).stderr.on('data', (data) => {
+//           console.error('STDERR: ' + data);
+//         });
+//       });
+//     }).connect({
+//       host: ip,
+//       port: 22,
+//       username: 'ec2-user',
+//       privateKey: fs.readFileSync(privateKeyPath)
+//     });
+//   });
+// };
+// const unpauseContainers = (ip, privateKeyPath) => {
+//   return new Promise((resolve, reject) => {
+//     const conn = new ssh();
+//     conn.on('ready', () => {
+//       conn.exec('docker ps -q | xargs -I {} docker unpause {}', (err, stream) => {
+//         if (err) return reject(err);
+//         stream.on('close', () => {
+//           conn.end();
+//           resolve();
+//         }).stderr.on('data', (data) => {
+//           console.error('STDERR: ' + data);
+//         });
+//       });
+//     }).connect({
+//       host: ip,
+//       port: 22,
+//       username: 'ec2-user',
+//       privateKey: fs.readFileSync()
+//     });
+//   });
+// };
 
 
 module.exports = router;

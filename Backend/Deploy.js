@@ -236,6 +236,12 @@ async function addInboundRules(ec2,securityGroupId,portNumber) {
         ToPort: 3306,
         IpRanges: [{ CidrIp: '0.0.0.0/0' }],
       },
+      {
+        IpProtocol: 'tcp',
+        FromPort: 22,
+        ToPort: 22,
+        IpRanges: [{ CidrIp: '0.0.0.0/0' }],
+      },
     ],
   };
 

@@ -231,14 +231,14 @@ function DeploymentsPage() {
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-200 py-8">
-      {loadingAfterStart && (
+      {/* {loadingAfterStart && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
           <div className="flex flex-col items-center">
             <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
             <div className="text-white text-xl font-semibold">The EC2 instance is starting up. This may take a moment, please be patient.</div>
           </div>
         </div>
-      )}
+      )} */}
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Deployments Table</h1>

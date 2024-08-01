@@ -29,15 +29,12 @@ sudo usermod -a -G docker ec2-user
 sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-
-
 # Pull the latest Docker images
 docker pull ${DOCKER_USERNAME}/backend-image:latest
-# docker pull ${DOCKER_USERNAME}/frontend-image:latest
+docker pull ${DOCKER_USERNAME}/frontend-image:latest
 
 # Determine which containers to run based on project type
 PROJECT_TYPE=${PROJECT_TYPE}
-
 # if [ "$PROJECT_TYPE" = "backend" ]; then
 #   docker pull ${DOCKER_USERNAME}/backend-image:latest
 #   echo "Running backend container..."
@@ -58,14 +55,12 @@ PROJECT_TYPE=${PROJECT_TYPE}
 # fi
 
 #!/bin/bash
-
 # Create docker-compose.yml based on the project type
 cat > /home/ec2-user/docker-compose.yml <<EOL
 version: '3.8'
 services:
 
 EOL
-
 
 if [ "$PROJECT_TYPE" = "backend" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
@@ -81,9 +76,7 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-
-
-
+    restart: always
 
   backend:
     image: ${DOCKER_USERNAME}/${projectName}-backend-image:latest
@@ -98,6 +91,7 @@ if [ "$PROJECT_TYPE" = "backend" ]; then
       - "80:3000"
     depends_on:
       - mysql
+    restart: always
     
 volumes:
   mysql-data:
@@ -111,6 +105,7 @@ elif [ "$PROJECT_TYPE" = "frontend" ]; then
       - "80:80"
     environment:
       VITE_BACKEND_URL: ${BACKEND_IP}
+    restart: always
 EOL
 elif [ "$PROJECT_TYPE" = "both" ]; then
   cat >> /home/ec2-user/docker-compose.yml <<EOL
@@ -126,12 +121,11 @@ elif [ "$PROJECT_TYPE" = "both" ]; then
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-
-
-
+    restart: always
 
   backend:
     image: ${DOCKER_USERNAME}/${projectName}-backend-image:latest
+    container_name: ${projectName}_backend
     environment:
       DB_HOST: mysql
       DB_USER: ${MYSQL_USER}
@@ -142,6 +136,7 @@ elif [ "$PROJECT_TYPE" = "both" ]; then
       - "80:3000"
     depends_on:
       - mysql
+    restart: always
     
 volumes:
   mysql-data:
@@ -160,4 +155,3 @@ echo "Waiting for backend service to be ready..."
 sleep 30
 
 docker-compose exec backend npx sequelize db:migrate
-

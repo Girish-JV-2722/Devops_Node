@@ -154,18 +154,10 @@ export default function FormPage() {
           return response.json();
         })
         .then((data) => {
-
           console.log(data);
-          setTimeout(() => {
-            toast("Successfully deployed your project");
-            setLoading(false);
-
-            setTimeout(() => {
-              navigate(`/deployments`);
-            }, 4000);
-          }, 10000); //10 sec
-
-
+          toast("Successfully deployed your project");
+          setLoading(false);
+          navigate(`/deployments`);
         });
 
     } catch (error) {
@@ -291,7 +283,7 @@ export default function FormPage() {
             onChange={handleOnChange}
             placeholder="Frontend GitHub Repository"
           />
-           <TextInput
+          <TextInput
             name="frontendNodeVersion"
             value={formData?.frontendNodeVersion}
             onChange={handleOnChange}
@@ -303,7 +295,7 @@ export default function FormPage() {
             onChange={handleOnChange}
             placeholder="Backend GitHub Repository"
           />
-           <TextInput
+          <TextInput
             name="nodeVersion"
             value={formData?.nodeVersion}
             onChange={handleOnChange}

@@ -11,15 +11,14 @@ function DeploymentsPage() {
   const [rerender, setRerender] = useState(false);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAfterStart, setLoadingAfterStart] = useState(false);
+  const [loadingforEC2, setLoadingforEC2] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         const response = await axios.get(`${API_URL}/getAllApp`);
-
-        // Extract project IDs with associated applications
+        // // Extract project IDs with associated applications
         const applicationProjectIds = new Set(response.data.applications.map(app => app.projectId));
         console.log(response.data);
 
@@ -40,6 +39,7 @@ function DeploymentsPage() {
             backendInstanceId: app ? app.backendInstanceId : null,
           };
         });
+
         setProjects(combinedData);
         setLoading(false);
       } catch (err) {
@@ -67,35 +67,33 @@ function DeploymentsPage() {
   };
 
   const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
-    setLoadingAfterStart(true);
+    loadingforEC2(true);
     try {
       const response = await axios.get(`${API_URL}/startInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
-      const data = 1;
-      if (data) {
+      if (response.data) {
         console.log(data);
-        setTimeout(() => {
-          toast("Instance started successfully");
+        toast("Instance started successfully");
 
-          setLoadingAfterStart(false);
-          setProjects(prevProjects => prevProjects.map(project =>
-            project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
-              ? { ...project, status: "deployed" }
-              : project
-          ));
-          setRerender(!rerender);
-        }, 60000); // 3 mins
+        loadingforEC2(false);
+        setProjects(prevProjects => prevProjects.map(project =>
+          project.frontendInstanceId === frontendInstanceId || project.backendInstanceId === backendInstanceId
+            ? { ...project, status: "deployed" }
+            : project
+        ));
         setRerender(!rerender);
+
       } else {
-        setLoadingAfterStart(false);
+        loadingforEC2(false);
         toast("Failed to start instance");
       }
     } catch (err) {
-      setLoadingAfterStart(false);
+      loadingforEC2(false);
       toast("Error starting instance");
     }
   };
 
   const handleStopInstance = async (frontendInstanceId, backendInstanceId) => {
+    loadingforEC2(true);
     try {
       const response = await axios.get(`${API_URL}/stopInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
       if (response.data) {
@@ -105,11 +103,13 @@ function DeploymentsPage() {
             ? { ...project, status: "stopped" }
             : project
         ));
+        loadingforEC2(false);
         setRerender(!rerender);
       } else {
         toast("Failed to stop instance");
       }
     } catch (error) {
+      loadingforEC2(false);
       toast("Error stopping instance");
     }
   };
@@ -190,14 +190,6 @@ function DeploymentsPage() {
                   Start
                 </button>
               )}
-              {status === 'failed' && (
-                <button
-                  onClick={() => handleStartInstance(frontendInstanceId, backendInstanceId)}
-                  className="bg-green-500 text-white py-1 px-2 rounded-lg shadow hover:bg-green-600"
-                >
-                  Retry
-                </button>
-              )}
             </div>
           );
         },
@@ -213,7 +205,7 @@ function DeploymentsPage() {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-200">
         <div className="bg-white p-6 rounded-lg shadow-lg w-80 h-40 flex items-center justify-center">
-          Loading...
+          Loading the deployments table...
         </div>
       </div>
     );
@@ -231,17 +223,23 @@ function DeploymentsPage() {
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-200 py-8">
-      {/* {loadingAfterStart && (
+      {loadingforEC2 && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75 z-50">
           <div className="flex flex-col items-center">
             <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
             <div className="text-white text-xl font-semibold">The EC2 instance is starting up. This may take a moment, please be patient.</div>
           </div>
         </div>
-      )} */}
+      )}
       <div className="w-[60%] mx-[20%] px-4 py-8 bg-white">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Deployments Table</h1>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600"
+          >
+            Home
+          </button>
         </div>
         {projects.length === 0 ? (
           <p className="text-center text-gray-600 py-8">No projects listed yet</p>

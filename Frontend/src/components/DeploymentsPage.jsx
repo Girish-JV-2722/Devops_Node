@@ -53,19 +53,24 @@ function DeploymentsPage() {
   }, [rerender]);
 
   const handleTerminateInstance = async (frontendInstanceId, backendInstanceId) => {
+    setLoadingforEC2(true);
     try {
       const response = await axios.get(`${API_URL}/terminateInstance?frontendInstanceId=${frontendInstanceId}&backendInstanceId=${backendInstanceId}`);
       
       if (response.data) {
-        toast("Instance terminated successfully");
+        setLoadingforEC2(false);
         setRerender(!rerender);
+        toast("Instance terminated successfully");
       } else {
+        setLoadingforEC2(false);
         toast("Failed to terminate instance");
       }
     } catch (error) {
+      setLoadingforEC2(false);
       toast("Error terminating instance");
     }
   };
+  
 
   const handleStartInstance = async (frontendInstanceId, backendInstanceId) => {
     setLoadingforEC2(true);
